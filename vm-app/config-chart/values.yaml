@@ -12,6 +12,6 @@ stage: ""
 namespace: ""
 
 # Percentage (0-100) of /color requests that return an error.
-errorRate: 0
+errorRate: 100
 # Added response latency for /color requests.
 latency: 0
