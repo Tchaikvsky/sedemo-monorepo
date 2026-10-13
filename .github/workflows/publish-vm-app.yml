@@ -21,7 +21,7 @@ concurrency:
 
 env:
   REGISTRY: ghcr.io
-  ARTIFACT_NAME: ${{ github.repository }}-nav-service
+  ARTIFACT_NAME: ${{ github.repository }}-vm-app
   ARTIFACT_TYPE: application/vnd.akuity.nav-service.v1
 
 jobs:

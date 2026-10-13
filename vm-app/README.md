@@ -49,7 +49,7 @@ go run . --config /path/to/config.yaml
 
 Bump `app/VERSION` and merge to `main`. The publish workflow builds a static
 linux/amd64 binary and pushes
-`ghcr.io/akuity/sedemo-monorepo-nav-service:<VERSION>` with `oras`. The
+`ghcr.io/akuity/sedemo-monorepo-vm-app:<VERSION>` with `oras`. The
 artifact has one layer, `nav-service_<VERSION>_linux_amd64.tar.gz`, holding
 `nav-service` and `nav-service.service`. Existing tags are never overwritten,
 so the workflow fails if `VERSION` was not bumped.
