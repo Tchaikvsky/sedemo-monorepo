@@ -1,0 +1,12 @@
+{{- /* Renders /etc/nav-service/config.yaml. Not a Kubernetes manifest. */ -}}
+service:
+  stage: {{ required "service.stage is required" .Values.service.stage | toJson }}
+  listenAddr: {{ .Values.service.listenAddr | toJson }}
+pricing:
+  feedUrl: {{ .Values.pricing.feedUrl | toJson }}
+  currency: {{ .Values.pricing.currency | toJson }}
+  navCutoff: {{ .Values.pricing.navCutoff | toJson }}
+  roundingDecimals: {{ .Values.pricing.roundingDecimals | int }}
+database:
+  host: {{ required "database.host is required" .Values.database.host | toJson }}
+  name: {{ required "database.name is required" .Values.database.name | toJson }}
