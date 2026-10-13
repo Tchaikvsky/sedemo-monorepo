@@ -14,4 +14,4 @@ namespace: ""
 # Percentage (0-100) of /color requests that return an error.
 errorRate: 0
 # Added response latency for /color requests.
-latency: 10
+latency: 0
