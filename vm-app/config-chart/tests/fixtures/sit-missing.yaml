@@ -1,3 +1,2 @@
-# database.host intentionally omitted: rendering must fail.
-database:
-  name: nav_sit
+# namespace intentionally omitted: rendering must fail.
+latency: 0

@@ -1,3 +1,1 @@
-database:
-  host: navdb-dev.internal.example
-  name: nav_dev
+namespace: vm-dev

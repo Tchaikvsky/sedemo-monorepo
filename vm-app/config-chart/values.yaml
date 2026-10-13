@@ -1,19 +1,17 @@
-# Shared defaults for every stage. Per-stage values files (owned by the
-# platform repo) supply the required keys below and may override defaults.
+# Shared defaults for every stage. Required keys are set by the promotion
+# (color, semver, stage) or by the per-stage values file in the platform repo
+# (namespace).
 
-service:
-  # Required per stage (set by the promotion, e.g. --set service.stage=dev).
-  stage: ""
-  listenAddr: ":8080"
+# Required. Bubble color; the suffix of the image tag (e.g. "blue" for 50-blue).
+color: ""
+# Required. The image tag being deployed (e.g. 50-blue).
+semver: ""
+# Required. Stage name (dev, qa, sit, uat, prod).
+stage: ""
+# Required per stage, e.g. vm-dev.
+namespace: ""
 
-pricing:
-  feedUrl: https://feeds.navpricing.example/v1/nav
-  currency: CAD
-  navCutoff: "16:00 ET"
-  roundingDecimals: 4
-
-database:
-  # Required per stage.
-  host: ""
-  # Required per stage.
-  name: ""
+# Percentage (0-100) of /color requests that return an error.
+errorRate: 0
+# Added response latency for /color requests.
+latency: 0
