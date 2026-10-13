@@ -1,0 +1,89 @@
+name: Publish nav-service artifact
+run-name: Publish nav-service artifact (vm-app)
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'vm-app/app/**'
+      - '.github/workflows/publish-vm-app.yml'
+  workflow_dispatch:
+
+permissions:
+  packages: write
+  contents: read
+
+# Two runs for the same VERSION must not race past the existence check.
+concurrency:
+  group: publish-vm-app
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+  ARTIFACT_NAME: ${{ github.repository }}-nav-service
+  ARTIFACT_TYPE: application/vnd.akuity.nav-service.v1
+
+jobs:
+  publish:
+    defaults:
+      run:
+        working-directory: vm-app/app
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache-dependency-path: vm-app/app/go.sum
+      - name: Read version
+        run: |
+          V="$(tr -d '[:space:]' < VERSION)"
+          if ! [[ "$V" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error file=vm-app/app/VERSION::VERSION must be plain semver (e.g. 1.2.3), got '$V'"
+            exit 1
+          fi
+          echo "VERSION=$V" >> "$GITHUB_ENV"
+          echo "REF=${REGISTRY}/${ARTIFACT_NAME}:${V}" >> "$GITHUB_ENV"
+      - name: Test
+        run: go test ./...
+      - name: Build static linux/amd64 binary
+        env:
+          CGO_ENABLED: '0'
+          GOOS: linux
+          GOARCH: amd64
+        run: go build -trimpath -ldflags "-s -w -X main.version=${VERSION}" -o dist/nav-service .
+      - name: Package tarball
+        run: |
+          cp nav-service.service dist/
+          TARBALL="nav-service_${VERSION}_linux_amd64.tar.gz"
+          tar --owner=0 --group=0 -czf "dist/${TARBALL}" -C dist nav-service nav-service.service
+          tar -tzvf "dist/${TARBALL}"
+          echo "TARBALL=${TARBALL}" >> "$GITHUB_ENV"
+      - name: Set up ORAS
+        uses: oras-project/setup-oras@v1
+      - name: Log in to GitHub Container Registry
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "$GHCR_TOKEN" | oras login "$REGISTRY" -u "${{ github.actor }}" --password-stdin
+      - name: Refuse to overwrite an existing tag
+        run: |
+          if oras manifest fetch "$REF" > /dev/null 2>&1; then
+            echo "::error file=vm-app/app/VERSION::${REF} already exists; bump vm-app/app/VERSION"
+            exit 1
+          fi
+          echo "${REF} does not exist yet"
+      - name: Push artifact
+        working-directory: vm-app/app/dist
+        run: |
+          oras push "$REF" \
+            --artifact-type "$ARTIFACT_TYPE" \
+            --annotation "org.opencontainers.image.title=nav-service" \
+            --annotation "org.opencontainers.image.description=Fund NAV pricing service (VM demo)" \
+            --annotation "org.opencontainers.image.version=${VERSION}" \
+            --annotation "org.opencontainers.image.revision=${{ github.sha }}" \
+            --annotation "org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}" \
+            "${TARBALL}:application/vnd.oci.image.layer.v1.tar+gzip"
+          echo "Pushed ${REF}" >> "$GITHUB_STEP_SUMMARY"
