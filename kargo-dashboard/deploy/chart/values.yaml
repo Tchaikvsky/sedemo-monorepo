@@ -8,4 +8,28 @@ image:
   # Overrides the image tag whose default is the chart appVersion.
   tag: 1
 
-
+ingress:
+  # The root domain for the ingress host. The full host will be <namespace>.<root_domain>.
+  root_domain: akpdemoapps.link
+# Rendered as-is into config.json (see kargo-dashboard/config.example.json for every option).
+# The API token is not part of this: it comes from the kargo-token Secret as KARGO_TOKEN.
+# Omitting decay.thresholds uses the built-in Good/OK/Bad/Worse defaults.
+config:
+  kargo:
+    url: https://kargo.akpdemoapps.link
+    tokenEnv: KARGO_TOKEN
+  refreshIntervalSeconds: 30
+  projects:
+    demo-rollouts:
+      displayName: Rollouts Demo
+      warehouse: demo-rollouts
+    sedemo-app-demo:
+      warehouse: sedemo-app-demo
+    sedemo-app-oct: {}
+    team-ada: {}
+    team-daniel: {}
+    team-eddie: {}
+    team-emily: {}
+    team-namho: {}
+    gatekeeper-stage: {}
+    demo-snow: {}
