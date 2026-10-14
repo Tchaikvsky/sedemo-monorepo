@@ -4,8 +4,6 @@ metadata:
   name: stable-ingress
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
-  tls:
-    enabled: true
 spec:
   ingressClassName: nginx
   rules:
