@@ -1,0 +1,677 @@
+{
+  "items": [
+    {
+      "metadata": {
+        "name": "dev"
+      },
+      "spec": {
+        "requestedFreight": [
+          {
+            "origin": {
+              "kind": "Warehouse",
+              "name": "demo-rollouts"
+            },
+            "sources": {
+              "direct": true
+            }
+          }
+        ],
+        "promotionTemplate": {
+          "spec": {
+            "steps": [
+              {
+                "uses": "scrubbed"
+              }
+            ]
+          }
+        }
+      },
+      "status": {
+        "freightHistory": [
+          {
+            "id": "2a0ada316ecc557b24d40a88d2b3a030777b3a07",
+            "items": {
+              "Warehouse/demo-rollouts": {
+                "name": "6c85ac80a54b6a207c6f9c0ac930630dc5403153",
+                "origin": {
+                  "kind": "Warehouse",
+                  "name": "demo-rollouts"
+                },
+                "images": [
+                  {
+                    "repoURL": "ghcr.io/akuity/sedemo-monorepo-rollouts-app",
+                    "tag": "50-blue",
+                    "digest": "sha256:991976b33be76f848cca5837b175cd9719afc32eafff0adc24f45a8ae67c0c69"
+                  }
+                ],
+                "commits": [
+                  {
+                    "repoURL": "https://github.com/akuity/sedemo-monorepo",
+                    "id": "1f51cd6acd8073422458727a0cf34fcddf5dfab3"
+                  }
+                ],
+                "charts": []
+              }
+            }
+          },
+          {
+            "id": "2a0ada316ecc557b24d40a88d2b3a030777b3a07",
+            "items": {
+              "Warehouse/demo-rollouts": {
+                "name": "6c85ac80a54b6a207c6f9c0ac930630dc5403153",
+                "origin": {
+                  "kind": "Warehouse",
+                  "name": "demo-rollouts"
+                },
+                "images": [
+                  {
+                    "repoURL": "ghcr.io/akuity/sedemo-monorepo-rollouts-app",
+                    "tag": "50-blue",
+                    "digest": "sha256:991976b33be76f848cca5837b175cd9719afc32eafff0adc24f45a8ae67c0c69"
+                  }
+                ],
+                "commits": [
+                  {
+                    "repoURL": "https://github.com/akuity/sedemo-monorepo",
+                    "id": "1f51cd6acd8073422458727a0cf34fcddf5dfab3"
+                  }
+                ],
+                "charts": []
+              }
+            }
+          },
+          {
+            "id": "80404878b1c9284974d4b47ce21606f4475692e4",
+            "items": {
+              "Warehouse/demo-rollouts": {
+                "name": "5f8987cc9c8159e78a09b9676c1af4171954e293",
+                "origin": {
+                  "kind": "Warehouse",
+                  "name": "demo-rollouts"
+                },
+                "images": [
+                  {
+                    "repoURL": "ghcr.io/akuity/sedemo-monorepo-rollouts-app",
+                    "tag": "49-green",
+                    "digest": "sha256:22066d9d23e8d81c683d12fd4f7c556422b530b4e0302e254ad66113fbb41962"
+                  }
+                ],
+                "commits": [
+                  {
+                    "repoURL": "https://github.com/akuity/sedemo-monorepo",
+                    "id": "035c6ecad1d7142f8e145fde420faac16ba742df"
+                  }
+                ],
+                "charts": []
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "name": "prod"
+      },
+      "spec": {
+        "requestedFreight": [
+          {
+            "origin": {
+              "kind": "Warehouse",
+              "name": "demo-rollouts"
+            },
+            "sources": {
+              "stages": [
+                "staging"
+              ]
+            }
+          }
+        ],
+        "promotionTemplate": {
+          "spec": {
+            "steps": [
+              {
+                "uses": "scrubbed"
+              }
+            ]
+          }
+        }
+      },
+      "status": {
+        "freightHistory": [
+          {
+            "id": "2a0ada316ecc557b24d40a88d2b3a030777b3a07",
+            "items": {
+              "Warehouse/demo-rollouts": {
+                "name": "6c85ac80a54b6a207c6f9c0ac930630dc5403153",
+                "origin": {
+                  "kind": "Warehouse",
+                  "name": "demo-rollouts"
+                },
+                "images": [
+                  {
+                    "repoURL": "ghcr.io/akuity/sedemo-monorepo-rollouts-app",
+                    "tag": "50-blue",
+                    "digest": "sha256:991976b33be76f848cca5837b175cd9719afc32eafff0adc24f45a8ae67c0c69"
+                  }
+                ],
+                "commits": [
+                  {
+                    "repoURL": "https://github.com/akuity/sedemo-monorepo",
+                    "id": "1f51cd6acd8073422458727a0cf34fcddf5dfab3"
+                  }
+                ],
+                "charts": []
+              }
+            }
+          },
+          {
+            "id": "2a0ada316ecc557b24d40a88d2b3a030777b3a07",
+            "items": {
+              "Warehouse/demo-rollouts": {
+                "name": "6c85ac80a54b6a207c6f9c0ac930630dc5403153",
+                "origin": {
+                  "kind": "Warehouse",
+                  "name": "demo-rollouts"
+                },
+                "images": [
+                  {
+                    "repoURL": "ghcr.io/akuity/sedemo-monorepo-rollouts-app",
+                    "tag": "50-blue",
+                    "digest": "sha256:991976b33be76f848cca5837b175cd9719afc32eafff0adc24f45a8ae67c0c69"
+                  }
+                ],
+                "commits": [
+                  {
+                    "repoURL": "https://github.com/akuity/sedemo-monorepo",
+                    "id": "1f51cd6acd8073422458727a0cf34fcddf5dfab3"
+                  }
+                ],
+                "charts": []
+              }
+            }
+          },
+          {
+            "id": "2a0ada316ecc557b24d40a88d2b3a030777b3a07",
+            "items": {
+              "Warehouse/demo-rollouts": {
+                "name": "6c85ac80a54b6a207c6f9c0ac930630dc5403153",
+                "origin": {
+                  "kind": "Warehouse",
+                  "name": "demo-rollouts"
+                },
+                "images": [
+                  {
+                    "repoURL": "ghcr.io/akuity/sedemo-monorepo-rollouts-app",
+                    "tag": "50-blue",
+                    "digest": "sha256:991976b33be76f848cca5837b175cd9719afc32eafff0adc24f45a8ae67c0c69"
+                  }
+                ],
+                "commits": [
+                  {
+                    "repoURL": "https://github.com/akuity/sedemo-monorepo",
+                    "id": "1f51cd6acd8073422458727a0cf34fcddf5dfab3"
+                  }
+                ],
+                "charts": []
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "name": "prod-amer-east"
+      },
+      "spec": {
+        "requestedFreight": [
+          {
+            "origin": {
+              "kind": "Warehouse",
+              "name": "demo-rollouts"
+            },
+            "sources": {
+              "stages": [
+                "prod"
+              ],
+              "autoPromotionOptions": {
+                "selectionPolicy": "MatchUpstream"
+              }
+            }
+          }
+        ],
+        "promotionTemplate": {
+          "spec": {
+            "steps": [
+              {
+                "uses": "scrubbed"
+              }
+            ]
+          }
+        }
+      },
+      "status": {
+        "freightHistory": [
+          {
+            "id": "2a0ada316ecc557b24d40a88d2b3a030777b3a07",
+            "items": {
+              "Warehouse/demo-rollouts": {
+                "name": "6c85ac80a54b6a207c6f9c0ac930630dc5403153",
+                "origin": {
+                  "kind": "Warehouse",
+                  "name": "demo-rollouts"
+                },
+                "images": [
+                  {
+                    "repoURL": "ghcr.io/akuity/sedemo-monorepo-rollouts-app",
+                    "tag": "50-blue",
+                    "digest": "sha256:991976b33be76f848cca5837b175cd9719afc32eafff0adc24f45a8ae67c0c69"
+                  }
+                ],
+                "commits": [
+                  {
+                    "repoURL": "https://github.com/akuity/sedemo-monorepo",
+                    "id": "1f51cd6acd8073422458727a0cf34fcddf5dfab3"
+                  }
+                ],
+                "charts": []
+              }
+            }
+          },
+          {
+            "id": "2a0ada316ecc557b24d40a88d2b3a030777b3a07",
+            "items": {
+              "Warehouse/demo-rollouts": {
+                "name": "6c85ac80a54b6a207c6f9c0ac930630dc5403153",
+                "origin": {
+                  "kind": "Warehouse",
+                  "name": "demo-rollouts"
+                },
+                "images": [
+                  {
+                    "repoURL": "ghcr.io/akuity/sedemo-monorepo-rollouts-app",
+                    "tag": "50-blue",
+                    "digest": "sha256:991976b33be76f848cca5837b175cd9719afc32eafff0adc24f45a8ae67c0c69"
+                  }
+                ],
+                "commits": [
+                  {
+                    "repoURL": "https://github.com/akuity/sedemo-monorepo",
+                    "id": "1f51cd6acd8073422458727a0cf34fcddf5dfab3"
+                  }
+                ],
+                "charts": []
+              }
+            }
+          },
+          {
+            "id": "80404878b1c9284974d4b47ce21606f4475692e4",
+            "items": {
+              "Warehouse/demo-rollouts": {
+                "name": "5f8987cc9c8159e78a09b9676c1af4171954e293",
+                "origin": {
+                  "kind": "Warehouse",
+                  "name": "demo-rollouts"
+                },
+                "images": [
+                  {
+                    "repoURL": "ghcr.io/akuity/sedemo-monorepo-rollouts-app",
+                    "tag": "49-green",
+                    "digest": "sha256:22066d9d23e8d81c683d12fd4f7c556422b530b4e0302e254ad66113fbb41962"
+                  }
+                ],
+                "commits": [
+                  {
+                    "repoURL": "https://github.com/akuity/sedemo-monorepo",
+                    "id": "035c6ecad1d7142f8e145fde420faac16ba742df"
+                  }
+                ],
+                "charts": []
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "name": "prod-amer-west"
+      },
+      "spec": {
+        "requestedFreight": [
+          {
+            "origin": {
+              "kind": "Warehouse",
+              "name": "demo-rollouts"
+            },
+            "sources": {
+              "stages": [
+                "prod"
+              ],
+              "autoPromotionOptions": {
+                "selectionPolicy": "MatchUpstream"
+              }
+            }
+          }
+        ],
+        "promotionTemplate": {
+          "spec": {
+            "steps": [
+              {
+                "uses": "scrubbed"
+              }
+            ]
+          }
+        }
+      },
+      "status": {
+        "freightHistory": [
+          {
+            "id": "2a0ada316ecc557b24d40a88d2b3a030777b3a07",
+            "items": {
+              "Warehouse/demo-rollouts": {
+                "name": "6c85ac80a54b6a207c6f9c0ac930630dc5403153",
+                "origin": {
+                  "kind": "Warehouse",
+                  "name": "demo-rollouts"
+                },
+                "images": [
+                  {
+                    "repoURL": "ghcr.io/akuity/sedemo-monorepo-rollouts-app",
+                    "tag": "50-blue",
+                    "digest": "sha256:991976b33be76f848cca5837b175cd9719afc32eafff0adc24f45a8ae67c0c69"
+                  }
+                ],
+                "commits": [
+                  {
+                    "repoURL": "https://github.com/akuity/sedemo-monorepo",
+                    "id": "1f51cd6acd8073422458727a0cf34fcddf5dfab3"
+                  }
+                ],
+                "charts": []
+              }
+            }
+          },
+          {
+            "id": "80404878b1c9284974d4b47ce21606f4475692e4",
+            "items": {
+              "Warehouse/demo-rollouts": {
+                "name": "5f8987cc9c8159e78a09b9676c1af4171954e293",
+                "origin": {
+                  "kind": "Warehouse",
+                  "name": "demo-rollouts"
+                },
+                "images": [
+                  {
+                    "repoURL": "ghcr.io/akuity/sedemo-monorepo-rollouts-app",
+                    "tag": "49-green",
+                    "digest": "sha256:22066d9d23e8d81c683d12fd4f7c556422b530b4e0302e254ad66113fbb41962"
+                  }
+                ],
+                "commits": [
+                  {
+                    "repoURL": "https://github.com/akuity/sedemo-monorepo",
+                    "id": "035c6ecad1d7142f8e145fde420faac16ba742df"
+                  }
+                ],
+                "charts": []
+              }
+            }
+          },
+          {
+            "id": "ca4f26d82f7d6eae28ef3f121c733426b406981c",
+            "items": {
+              "Warehouse/demo-rollouts": {
+                "name": "7f97ae627a72ed01a1852f5b6dd3093e8bd23c22",
+                "origin": {
+                  "kind": "Warehouse",
+                  "name": "demo-rollouts"
+                },
+                "images": [
+                  {
+                    "repoURL": "ghcr.io/akuity/sedemo-monorepo-rollouts-app",
+                    "tag": "48-red",
+                    "digest": "sha256:d0d6dcc448783a166d55cb60b0dd9d116d6ad354a6b5bcc3bd9256b6fdd5018e"
+                  }
+                ],
+                "commits": [
+                  {
+                    "repoURL": "https://github.com/akuity/sedemo-monorepo",
+                    "id": "4c114da4dabaaa440d87818e0d43f5afc5b7f5b9"
+                  }
+                ],
+                "charts": []
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "name": "prod-emea"
+      },
+      "spec": {
+        "requestedFreight": [
+          {
+            "origin": {
+              "kind": "Warehouse",
+              "name": "demo-rollouts"
+            },
+            "sources": {
+              "stages": [
+                "prod"
+              ],
+              "autoPromotionOptions": {
+                "selectionPolicy": "MatchUpstream"
+              }
+            }
+          }
+        ],
+        "promotionTemplate": {
+          "spec": {
+            "steps": [
+              {
+                "uses": "scrubbed"
+              }
+            ]
+          }
+        }
+      },
+      "status": {
+        "freightHistory": [
+          {
+            "id": "2a0ada316ecc557b24d40a88d2b3a030777b3a07",
+            "items": {
+              "Warehouse/demo-rollouts": {
+                "name": "6c85ac80a54b6a207c6f9c0ac930630dc5403153",
+                "origin": {
+                  "kind": "Warehouse",
+                  "name": "demo-rollouts"
+                },
+                "images": [
+                  {
+                    "repoURL": "ghcr.io/akuity/sedemo-monorepo-rollouts-app",
+                    "tag": "50-blue",
+                    "digest": "sha256:991976b33be76f848cca5837b175cd9719afc32eafff0adc24f45a8ae67c0c69"
+                  }
+                ],
+                "commits": [
+                  {
+                    "repoURL": "https://github.com/akuity/sedemo-monorepo",
+                    "id": "1f51cd6acd8073422458727a0cf34fcddf5dfab3"
+                  }
+                ],
+                "charts": []
+              }
+            }
+          },
+          {
+            "id": "80404878b1c9284974d4b47ce21606f4475692e4",
+            "items": {
+              "Warehouse/demo-rollouts": {
+                "name": "5f8987cc9c8159e78a09b9676c1af4171954e293",
+                "origin": {
+                  "kind": "Warehouse",
+                  "name": "demo-rollouts"
+                },
+                "images": [
+                  {
+                    "repoURL": "ghcr.io/akuity/sedemo-monorepo-rollouts-app",
+                    "tag": "49-green",
+                    "digest": "sha256:22066d9d23e8d81c683d12fd4f7c556422b530b4e0302e254ad66113fbb41962"
+                  }
+                ],
+                "commits": [
+                  {
+                    "repoURL": "https://github.com/akuity/sedemo-monorepo",
+                    "id": "035c6ecad1d7142f8e145fde420faac16ba742df"
+                  }
+                ],
+                "charts": []
+              }
+            }
+          },
+          {
+            "id": "ca4f26d82f7d6eae28ef3f121c733426b406981c",
+            "items": {
+              "Warehouse/demo-rollouts": {
+                "name": "7f97ae627a72ed01a1852f5b6dd3093e8bd23c22",
+                "origin": {
+                  "kind": "Warehouse",
+                  "name": "demo-rollouts"
+                },
+                "images": [
+                  {
+                    "repoURL": "ghcr.io/akuity/sedemo-monorepo-rollouts-app",
+                    "tag": "48-red",
+                    "digest": "sha256:d0d6dcc448783a166d55cb60b0dd9d116d6ad354a6b5bcc3bd9256b6fdd5018e"
+                  }
+                ],
+                "commits": [
+                  {
+                    "repoURL": "https://github.com/akuity/sedemo-monorepo",
+                    "id": "4c114da4dabaaa440d87818e0d43f5afc5b7f5b9"
+                  }
+                ],
+                "charts": []
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "name": "staging"
+      },
+      "spec": {
+        "requestedFreight": [
+          {
+            "origin": {
+              "kind": "Warehouse",
+              "name": "demo-rollouts"
+            },
+            "sources": {
+              "stages": [
+                "dev"
+              ]
+            }
+          }
+        ],
+        "promotionTemplate": {
+          "spec": {
+            "steps": [
+              {
+                "uses": "scrubbed"
+              }
+            ]
+          }
+        }
+      },
+      "status": {
+        "freightHistory": [
+          {
+            "id": "2a0ada316ecc557b24d40a88d2b3a030777b3a07",
+            "items": {
+              "Warehouse/demo-rollouts": {
+                "name": "6c85ac80a54b6a207c6f9c0ac930630dc5403153",
+                "origin": {
+                  "kind": "Warehouse",
+                  "name": "demo-rollouts"
+                },
+                "images": [
+                  {
+                    "repoURL": "ghcr.io/akuity/sedemo-monorepo-rollouts-app",
+                    "tag": "50-blue",
+                    "digest": "sha256:991976b33be76f848cca5837b175cd9719afc32eafff0adc24f45a8ae67c0c69"
+                  }
+                ],
+                "commits": [
+                  {
+                    "repoURL": "https://github.com/akuity/sedemo-monorepo",
+                    "id": "1f51cd6acd8073422458727a0cf34fcddf5dfab3"
+                  }
+                ],
+                "charts": []
+              }
+            }
+          },
+          {
+            "id": "2a0ada316ecc557b24d40a88d2b3a030777b3a07",
+            "items": {
+              "Warehouse/demo-rollouts": {
+                "name": "6c85ac80a54b6a207c6f9c0ac930630dc5403153",
+                "origin": {
+                  "kind": "Warehouse",
+                  "name": "demo-rollouts"
+                },
+                "images": [
+                  {
+                    "repoURL": "ghcr.io/akuity/sedemo-monorepo-rollouts-app",
+                    "tag": "50-blue",
+                    "digest": "sha256:991976b33be76f848cca5837b175cd9719afc32eafff0adc24f45a8ae67c0c69"
+                  }
+                ],
+                "commits": [
+                  {
+                    "repoURL": "https://github.com/akuity/sedemo-monorepo",
+                    "id": "1f51cd6acd8073422458727a0cf34fcddf5dfab3"
+                  }
+                ],
+                "charts": []
+              }
+            }
+          },
+          {
+            "id": "80404878b1c9284974d4b47ce21606f4475692e4",
+            "items": {
+              "Warehouse/demo-rollouts": {
+                "name": "5f8987cc9c8159e78a09b9676c1af4171954e293",
+                "origin": {
+                  "kind": "Warehouse",
+                  "name": "demo-rollouts"
+                },
+                "images": [
+                  {
+                    "repoURL": "ghcr.io/akuity/sedemo-monorepo-rollouts-app",
+                    "tag": "49-green",
+                    "digest": "sha256:22066d9d23e8d81c683d12fd4f7c556422b530b4e0302e254ad66113fbb41962"
+                  }
+                ],
+                "commits": [
+                  {
+                    "repoURL": "https://github.com/akuity/sedemo-monorepo",
+                    "id": "035c6ecad1d7142f8e145fde420faac16ba742df"
+                  }
+                ],
+                "charts": []
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

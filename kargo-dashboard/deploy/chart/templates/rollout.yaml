@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dashboard-app
+spec:
+  replicas: {{ .Values.replicaCount | default 1 }}
+  selector:
+    matchLabels:
+      app: dashboard-app
+  template:
+    metadata:
+      labels:
+        app: dashboard-app
+      annotations:
+        # The app reads its config once at startup; a config change rolls the pods.
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      containers:
+        - image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          name: dashboard-app
+          ports:
+            - containerPort: 8080
+          env:
+            - name: CONFIG_PATH
+              value: /etc/kargo-dashboard/config.json
+            - name: KARGO_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: kargo-token      # Name of the K8s Secret
+                  key: token     # The key inside that Secret
+          volumeMounts:
+            - name: config
+              mountPath: /etc/kargo-dashboard
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: dashboard-config
+  minReadySeconds: 30

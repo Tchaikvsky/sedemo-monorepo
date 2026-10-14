@@ -1,0 +1,39 @@
+{
+  "items": [
+    {
+      "metadata": {
+        "name": "demo-rollouts"
+      },
+      "spec": {
+        "subscriptions": [
+          {
+            "image": {
+              "allowTagsRegexes": [
+                "^\\d*-[a-z]*$"
+              ],
+              "discoveryLimit": 5,
+              "imageSelectionStrategy": "NewestBuild",
+              "repoURL": "ghcr.io/akuity/sedemo-monorepo-rollouts-app",
+              "strictSemvers": true
+            }
+          },
+          {
+            "git": {
+              "commitSelectionStrategy": "NewestFromBranch",
+              "discoveryLimit": 20,
+              "includePaths": [
+                "rollouts-app"
+              ],
+              "repoURL": "https://github.com/akuity/sedemo-monorepo",
+              "strictSemvers": true
+            }
+          }
+        ],
+        "freightCreationPolicy": "Automatic",
+        "freightCreationCriteria": {
+          "expression": "imageFrom('ghcr.io/akuity/sedemo-monorepo-rollouts-app').Annotations['org.opencontainers.image.revision'] == commitFrom('https://github.com/akuity/sedemo-monorepo').ID\n"
+        }
+      }
+    }
+  ]
+}

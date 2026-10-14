@@ -1,0 +1,52 @@
+:root {
+  --bg: #fafafa;
+  --fg: #1c1c1e;
+  --muted: #6b6b70;
+  --panel: #ffffff;
+  --border: #dcdce0;
+  --latest-bg: #e8eaf6;
+  --latest-fg: #1a237e;
+  --neutral: #9e9e9e;
+  --cell-w: 124px;
+  --label-w: 168px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121214; --fg: #ececf0; --muted: #9a9aa2; --panel: #1b1b1f; --border: #34343a;
+    --latest-bg: #26294d; --latest-fg: #c5cae9;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121214; --fg: #ececf0; --muted: #9a9aa2; --panel: #1b1b1f; --border: #34343a;
+  --latest-bg: #26294d; --latest-fg: #c5cae9;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: 16px; background: var(--bg); color: var(--fg);
+  font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+header { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+h1 { font-size: 20px; margin: 0; }
+.muted { color: var(--muted); }
+#legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; }
+#legend span { display: inline-flex; align-items: center; gap: 6px; }
+#legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+#banner { background: #fff3cd; color: #5c4400; border: 1px solid #e6c65c; border-radius: 6px; padding: 8px 12px; margin-bottom: 12px; }
+.row {
+  display: grid; grid-template-columns: var(--label-w); grid-auto-flow: column; grid-auto-columns: var(--cell-w);
+  gap: 8px; align-items: stretch; padding: 8px; margin-bottom: 8px; overflow-x: auto;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+}
+.label { display: flex; flex-direction: column; justify-content: center; font-weight: 600; overflow-wrap: anywhere; }
+.label small { font-weight: 400; color: var(--muted); }
+.cell {
+  display: flex; flex-direction: column; justify-content: center; gap: 2px;
+  padding: 8px 10px; border-radius: 6px; min-height: 64px; text-align: left;
+}
+.cell .stage { font-size: 11px; opacity: .85; overflow-wrap: anywhere; }
+.cell .version { font-size: 16px; font-weight: 700; overflow-wrap: anywhere; }
+.cell .status { font-size: 11px; opacity: .9; }
+.cell.latest { background: var(--latest-bg); color: var(--latest-fg); border: 1px dashed var(--latest-fg); }
+.row.error { grid-template-columns: var(--label-w) 1fr; }
+.row.error .message { color: var(--muted); align-self: center; }
+footer { margin-top: 12px; font-size: 12px; }
