@@ -19,3 +19,7 @@ spec:
             name: dashboard-svc
             port:
               number: 80
+  tls:
+    - hosts:
+        - "{{ .Values.kargo.stage }}.{{ .Values.ingress.custom_prefix }}.{{ .Values.ingress.root_domain }}"
+      secretName: tls-secret
