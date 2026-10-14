@@ -18,7 +18,8 @@
       "warehouse": "demo-rollouts"
     },
     "sedemo-app-demo": {
-      "warehouse": "sedemo-app-demo"
-    }
+      "warehouses": ["sedemo-app-demo", "sedemo-app-demo-chart"]
+    },
+    "team-ada": {}
   }
 }

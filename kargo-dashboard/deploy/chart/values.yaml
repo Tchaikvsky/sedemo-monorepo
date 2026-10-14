@@ -25,9 +25,14 @@ config:
       warehouse: demo-rollouts
     sedemo-app-demo:
       warehouse: sedemo-app-demo
-    sedemo-app-oct: {}
-    team-ada: {}
-    team-daniel: {}
+    sedemo-app-oct: 
+      warehouse: sedemo-app-oct
+    team-ada: 
+      warehouses: 
+        - akkoma-main
+        - akkoma-release
+    team-daniel: 
+      warehouse: features
     team-eddie: {}
     team-emily: {}
     team-namho: {}

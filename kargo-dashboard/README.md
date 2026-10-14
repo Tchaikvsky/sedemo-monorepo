@@ -5,13 +5,14 @@ This project is a lightweight Node.js app that summarizes the current state of K
 ## Visualization
 
 - Project names are the y-axis row names
-- Each row may have an inconsistent number of cells, tied to the number of stages in that project
+- A project that uses several warehouses is still one row, split into one lane (sub-row) per warehouse, each labeled with its warehouse name (see [Configuration](#configuration))
+- Each lane may have an inconsistent number of cells, tied to the number of stages in that pipeline
 - Order of cells in a row matches the dependencies defined by Kargo Stages
 - Individual cells show the version of that project deployed to that stage
 - Cell color is a visual indicator of the version decay (more below in Version Decay)
-- The first column in every row is the latest freight version
+- The first column in every lane is the latest freight version of that lane's warehouse
 
-The visual is agnostic to stage names: there are no stage-name columns and rows are not aligned by name. Each row is simply that project's pipeline, left to right. The stage name appears as a small caption inside its cell.
+The visual is agnostic to stage names: there are no stage-name columns and rows are not aligned by name. Each lane is simply one warehouse's pipeline, left to right. The stage name appears as a small caption inside its cell.
 
 Stages with no promotion steps ("control flow" stages) never hold Freight, so they are not drawn, though they still count when ordering the pipeline.
 
@@ -28,7 +29,7 @@ Stages with no promotion steps ("control flow" stages) never hold Freight, so th
 
 Version decay is a visual indicator of idle inventory; meaning versions built but not yet delivered into higher environments. The greater the count of freight objects between latest freight and currently deployed, the higher the considered "decay" to be.
 
-Essentially this is the measure of how far out of date any environment or stage is. Only Freight from the configured warehouse is counted.
+Essentially this is the measure of how far out of date any environment or stage is. Only Freight from the lane's own warehouse is counted, so each lane has its own decay.
 
 The color scheme is customizable (`decay.thresholds`), and defaults to Good, OK, Bad, Worse:
 
@@ -75,13 +76,15 @@ See [`config.example.json`](config.example.json).
 - `decay.thresholds`: ascending list of `{ max, label, color }`, where `max` is the highest "versions behind" count the entry covers. Only the last entry may (and must) have `max: null`
 - Projects to include, as a map (key order is display order), with individual values:
   - `displayName`: optional label
-  - `warehouse`: which warehouse (by name) to consider. Optional when the project has exactly one warehouse; required when it has several, otherwise the row shows an error
+  - `warehouse`: show one warehouse (by name). A single lane with no warehouse caption
+  - `warehouses`: a list of warehouse names; each becomes its own lane inside the project's row, in list order, with its name as a caption. Use either `warehouse` or `warehouses`, not both
+  - With neither, every warehouse the project has becomes a lane (sorted by name). A project with a single warehouse is a single lane with no caption
   - `tokenEnv`: optional per-project token variable, overriding `kargo.tokenEnv`
   - `excludeStages`: stages to exclude (regex if prefixed with `regex:`, or full match otherwise)
   - `includeStages`: stages to include (regex if prefixed with `regex:`, or full match otherwise)
   - Stages will first consider all includes, and then remove any excludes. Absence of defined includes will include all, and then apply excludes if any. Regexes are unanchored, so add `^` and `$` where needed.
 
-A project that fails (no access, unknown warehouse, several warehouses with none chosen) shows an error row; the other projects still render.
+A project that fails as a whole (no token access, no warehouses) shows an error row. A single bad warehouse (for example a misspelled name in `warehouses`) shows an error in just that lane. Either way the other projects and lanes still render. `includeStages` and `excludeStages` apply to every lane of a project.
 
 ## API token
 
@@ -103,10 +106,10 @@ Kargo's API describes both project-level tokens (`POST /v1beta1/projects/{projec
 
 Kargo's API should expose all needed data. i.e. latest freight, what version is in each stage.
 
-This app uses the Kargo REST API (`/v1beta1`, verified against Kargo v1.12.1), with three read-only calls per project per refresh:
+This app uses the Kargo REST API (`/v1beta1`, verified against Kargo v1.12.1), with read-only calls per project per refresh (two, plus one freight call per lane):
 
 - `GET /v1beta1/projects/{project}/warehouses`
-- `GET /v1beta1/projects/{project}/stages?freightOrigins={warehouse}`
-- `GET /v1beta1/projects/{project}/freight?origins={warehouse}`
+- `GET /v1beta1/projects/{project}/stages` (all of the project's stages; each lane picks those that request its warehouse)
+- `GET /v1beta1/projects/{project}/freight?origins={warehouse}` (once per lane)
 
 The current version of a stage comes from `status.freightHistory[0].items["Warehouse/{warehouse}"]`.

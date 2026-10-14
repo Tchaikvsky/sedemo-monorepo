@@ -50,9 +50,57 @@ function tooltip(cell) {
   return lines.join('\n');
 }
 
+// A link when a URL is known, otherwise plain text. Opens Kargo in a new tab.
+function linkOrText(tag, className, text, href) {
+  const e = el(tag, className);
+  if (!href) {
+    e.textContent = text;
+    return e;
+  }
+  const a = el('a', '', text);
+  a.href = href;
+  a.target = '_blank';
+  a.rel = 'noopener noreferrer';
+  e.append(a);
+  return e;
+}
+
+function renderCell(s) {
+  const color = s.decay.color || NEUTRAL;
+  const c = el('div', 'cell');
+  c.style.background = color;
+  c.style.color = textColor(color);
+  c.append(linkOrText('span', 'stage', s.name, s.stageUrl), linkOrText('span', 'version', s.version ?? '—', s.freightUrl),
+    el('span', 'status', s.decay.label));
+  c.title = tooltip(s);
+  return c;
+}
+
+// One warehouse's pipeline: [caption?][latest][stage cells...], left-packed in pipeline order.
+function renderLane(lane, showCaption) {
+  const l = el('div', 'lane');
+  if (showCaption) {
+    l.classList.add('captioned');
+    l.append(el('div', 'lane-caption', lane.warehouse));
+  }
+  if (lane.error) {
+    l.classList.add('error');
+    l.append(el('div', 'message', lane.error));
+    return l;
+  }
+  const latest = el('div', 'cell latest');
+  latest.append(el('span', 'stage', 'latest'),
+    linkOrText('span', 'version', lane.latest ? lane.latest.version : '—', lane.latest?.freightUrl));
+  if (lane.latest) latest.title = tooltip({ ...lane.latest, decay: {} });
+  l.append(latest, ...lane.stages.map(renderCell));
+  return l;
+}
+
+// A project is one row: its label once on the left, then one lane per warehouse.
 function renderRow(row) {
   const r = el('section', 'row');
-  const label = el('div', 'label', row.displayName);
+  const label = el('div', 'label');
+  label.append(linkOrText('span', '', row.displayName, row.projectUrl));
   if (row.displayName !== row.project) label.append(el('small', '', row.project));
   r.append(label);
 
@@ -61,21 +109,9 @@ function renderRow(row) {
     r.append(el('div', 'message', row.error));
     return r;
   }
-
-  const latest = el('div', 'cell latest');
-  latest.append(el('span', 'stage', 'latest'), el('span', 'version', row.latest ? row.latest.version : '—'));
-  if (row.latest) latest.title = tooltip({ ...row.latest, decay: {} });
-  r.append(latest);
-
-  for (const s of row.stages) {
-    const color = s.decay.color || NEUTRAL;
-    const c = el('div', 'cell');
-    c.style.background = color;
-    c.style.color = textColor(color);
-    c.append(el('span', 'stage', s.name), el('span', 'version', s.version ?? '—'), el('span', 'status', s.decay.label));
-    c.title = tooltip(s);
-    r.append(c);
-  }
+  const lanes = el('div', 'lanes');
+  lanes.append(...row.lanes.map((lane) => renderLane(lane, row.showLaneCaptions)));
+  r.append(lanes);
   return r;
 }
 

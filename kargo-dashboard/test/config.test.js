@@ -59,6 +59,26 @@ test('threshold validation', () => {
   assert.doesNotThrow(() => t([c(0), c(null)]));
 });
 
+const withProject = (p) => validateConfig({ ...base(), projects: { a: p } }, env).projects.a;
+
+test('warehouse selection normalises to a list plus a plural flag', () => {
+  assert.deepEqual([withProject({ warehouse: 'w' }).warehouses, withProject({ warehouse: 'w' }).plural], [['w'], false]);
+  assert.deepEqual([withProject({ warehouses: ['x', 'y'] }).warehouses, withProject({ warehouses: ['x', 'y'] }).plural], [['x', 'y'], true]);
+  assert.equal(withProject({ warehouses: ['only'] }).plural, true, 'explicit plural form is honored even with one entry');
+  assert.deepEqual([withProject({}).warehouses, withProject({}).plural], [[], false], 'neither key means all warehouses');
+});
+
+test('warehouse and warehouses together, empty, non-string and duplicate lists are rejected', () => {
+  assert.throws(() => withProject({ warehouse: 'w', warehouses: ['x'] }), /either warehouse or warehouses, not both/);
+  assert.throws(() => withProject({ warehouses: [] }), /non-empty array/);
+  assert.throws(() => withProject({ warehouses: 'x' }), /non-empty array/);
+  assert.throws(() => withProject({ warehouses: ['x', 3] }), /only non-empty strings/);
+  assert.throws(() => withProject({ warehouses: ['x', ''] }), /only non-empty strings/);
+  assert.throws(() => withProject({ warehouses: ['x', 'x'] }), /duplicates/);
+  assert.throws(() => withProject({ warehouse: '' }), /non-empty string/);
+  assert.throws(() => withProject({ warehouse: 5 }), /non-empty string/);
+});
+
 test('requires a url', () => {
   assert.throws(() => validateConfig({ projects: { a: {} } }, env), /kargo.url/);
 });

@@ -13,11 +13,11 @@ test('builds URLs, sends bearer token and JSON accept', async () => {
   respond.calls.length = 0;
   const c = client(respond(200, { items: [{ metadata: { name: 'w' } }] }));
   assert.equal((await c.listWarehouses('p q', 'tok')).length, 1);
-  await c.listStages('p', 'wh/1', 'tok');
+  await c.listStages('p', 'tok');
   await c.listFreight('p', 'wh', 'tok');
   assert.deepEqual(respond.calls.map((x) => x.url), [
     'https://k.example/v1beta1/projects/p%20q/warehouses',
-    'https://k.example/v1beta1/projects/p/stages?freightOrigins=wh%2F1',
+    'https://k.example/v1beta1/projects/p/stages',
     'https://k.example/v1beta1/projects/p/freight?origins=wh',
   ]);
   assert.equal(respond.calls[0].init.headers.Authorization, 'Bearer tok');

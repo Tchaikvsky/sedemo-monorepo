@@ -42,6 +42,38 @@ function validatePatterns(name, patterns) {
   return patterns;
 }
 
+// Normalises the warehouse selection for a project.
+// `warehouse: "x"` -> { warehouses: ["x"], plural: false }
+// `warehouses: [..]` -> { warehouses: [..], plural: true }
+// neither -> { warehouses: [], plural: false }, meaning "every warehouse the project has".
+function parseWarehouses(key, value) {
+  const hasOne = value.warehouse !== undefined;
+  const hasMany = value.warehouses !== undefined;
+  if (hasOne && hasMany) {
+    throw new Error(`projects.${key}: set either warehouse or warehouses, not both`);
+  }
+  if (hasOne) {
+    if (typeof value.warehouse !== 'string' || !value.warehouse) {
+      throw new Error(`projects.${key}.warehouse must be a non-empty string`);
+    }
+    return { warehouses: [value.warehouse], plural: false };
+  }
+  if (hasMany) {
+    const list = value.warehouses;
+    if (!Array.isArray(list) || list.length === 0) {
+      throw new Error(`projects.${key}.warehouses must be a non-empty array`);
+    }
+    if (list.some((w) => typeof w !== 'string' || !w)) {
+      throw new Error(`projects.${key}.warehouses must contain only non-empty strings`);
+    }
+    if (new Set(list).size !== list.length) {
+      throw new Error(`projects.${key}.warehouses contains duplicates`);
+    }
+    return { warehouses: [...list], plural: true };
+  }
+  return { warehouses: [], plural: false };
+}
+
 // Validates a parsed config object and returns it with defaults applied.
 // `env` is injectable for tests.
 export function validateConfig(raw, env = process.env) {
@@ -76,7 +108,7 @@ export function validateConfig(raw, env = process.env) {
     const tokenEnv = value.tokenEnv || kargo.tokenEnv;
     projects[key] = {
       displayName: value.displayName || key,
-      warehouse: value.warehouse,
+      ...parseWarehouses(key, value),
       tokenEnv,
       includeStages: validatePatterns(`projects.${key}.includeStages`, value.includeStages),
       excludeStages: validatePatterns(`projects.${key}.excludeStages`, value.excludeStages),

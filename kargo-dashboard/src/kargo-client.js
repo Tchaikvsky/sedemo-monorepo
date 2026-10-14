@@ -43,9 +43,9 @@ export function createKargoClient({ url, fetchImpl = fetch, timeoutMs = TIMEOUT_
       return body.items || [];
     },
 
-    async listStages(project, warehouse, token) {
-      const q = `freightOrigins=${encodeURIComponent(warehouse)}`;
-      const body = await get(`${projectPath(project)}/stages?${q}`, token, project);
+    // All of the project's stages; callers pick the ones that request a given warehouse.
+    async listStages(project, token) {
+      const body = await get(`${projectPath(project)}/stages`, token, project);
       return body.items || [];
     },
 

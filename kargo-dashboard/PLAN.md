@@ -1,6 +1,6 @@
 # Kargo Dashboard — Implementation Plan
 
-Source of truth for intent: [README.md](README.md). This plan turns it into concrete, ordered work. Owner decisions are in section 11. Nothing is open. The one external dependency, the API token, is handled by the protocol in section 12. Where this plan and the README disagree, follow this plan and update the README in step 12.
+Source of truth for intent: [README.md](README.md). This plan turns it into concrete, ordered work. Owner decisions are in section 11. Nothing is open. The one external dependency, the API token, is handled by the protocol in section 12. **Change request 1 (multiple warehouses per project) is planned in section 13 and supersedes 6.1 (including its "multiple warehouses" error), 6.7 and the frontend row layout where they disagree.** Where this plan and the README disagree, follow this plan and update the README in step 12.
 
 ## 1. Goal
 
@@ -144,7 +144,8 @@ The client returns plain objects and does no business logic. It uses a 10s timeo
 
 ### 6.1 Warehouse selection
 - Use `project.warehouse` if it's set; error the row if no warehouse with that name exists.
-- Otherwise, if the project has exactly one warehouse, use it. If it has more than one, error the row with "multiple warehouses; set `warehouse` in config".
+- Otherwise, if the project has exactly one warehouse, use it.
+- ~~If it has more than one, error the row with "multiple warehouses; set `warehouse` in config".~~ **Superseded by section 13 (D7):** with more than one warehouse and no key, every warehouse becomes a lane.
 
 **Reference multi-warehouse case: `sedemo-app-demo`.** This is a templated-teams project (`sedemo-platform/templated-teams/kargo-chart`) with two warehouses:
 - `<app>`: subscriptions `[image, git]`, with `freightCreationCriteria` tying the image revision to the commit. Its version is the image tag.
@@ -217,6 +218,8 @@ Tests: 0, 1, 2, 3, 4 and 10 behind; a stage with no Freight; garbage-collected F
 
 ### 6.7 View model (`summarize.js`)
 
+> **Superseded by 13.5.** The project row now carries `lanes[]` (one per warehouse); the single-warehouse shape below is the content of one lane.
+
 ```json
 {
   "generatedAt": "2026-10-14T18:00:00Z",
@@ -244,6 +247,8 @@ Tests: 0, 1, 2, 3, 4 and 10 behind; a stage with no Freight; garbage-collected F
 - Log with `console`, one line per refresh with its timing.
 
 ## 8. Frontend (`public/`)
+
+> **Layout superseded by section 13:** a project is one row with its label once on the left and one lane per warehouse; a lane is the `[latest][cells…]` strip described below.
 - Poll `/api/summary` every `refreshIntervalSeconds`. The server can expose that in the payload.
 - Use a CSS grid where each row is `[project label][latest][stage cells…]`, so rows can have different lengths per the README.
 - **The visual is agnostic to stage names.** There are no stage-name column headers and no alignment across rows by name. Each row's cells are left-packed in that project's pipeline order (section 6.4), so rows differ in length and naming freely. Show the stage name as a small caption inside its cell, purely as a label. Nothing in layout or styling may depend on it.
@@ -291,7 +296,7 @@ Tests: 0, 1, 2, 3, 4 and 10 behind; a stage with no Freight; garbage-collected F
 1. `npm test` passes, with tests for every module in section 3 and every case listed in 6.2, 6.4 and 6.6.
 2. `summarize.test.js` runs on **real captured fixtures** for `demo-rollouts` and `sedemo-app-demo`, not hand-written ones.
 3. `npm start` against `https://kargo.akpdemoapps.link` renders both projects. For each one, the stage order, the version per stage and the "behind" count match what the Kargo UI shows at the same moment.
-4. A project configured with a bad token or a nonexistent warehouse shows an error row, and the others still render. Removing `warehouse` from `sedemo-app-demo` produces the "multiple warehouses" error row.
+4. A project configured with a bad token or a nonexistent warehouse shows an error row, and the others still render. *(The original check that removing `warehouse` from `sedemo-app-demo` gives a "multiple warehouses" error is superseded by section 13 D7: it now renders both warehouses as lanes.)*
 5. `docker build` succeeds, and the container serves `/healthz` → 200 with a mounted config.
 6. The README has been updated per step 12.
 
@@ -320,3 +325,102 @@ The owner provides a token when live validation starts. The token is never writt
 2. Before step 7, **stop and ask the owner for the token**. Request read access to `demo-rollouts` and `sedemo-app-demo`, and say whether a system-level or a per-project token is needed. Ask for one system-level token first. If it gets `403` on project endpoints, ask for per-project tokens and use `projects.<p>.tokenEnv`.
 3. The token is passed only as an env var (`KARGO_TOKEN` or the per-project vars) in the agent's shell.
 4. Before committing, grep the working tree and fixtures for the token value and for `Bearer`. The report must state that this check was done.
+
+## 13. Change request: `warehouses` (plural) renders one lane per warehouse
+
+Requested 2026-10-14. Status: **implemented 2026-10-14** (see the report in the session; one deviation noted below). Decision D7 is confirmed by the owner (no key means all warehouses become lanes); the other defaults in 13.4 stand unless the owner says otherwise.
+
+### 13.1 Requirement
+A project config may give `warehouses` (a list) instead of `warehouse` (singular). Each listed warehouse becomes **its own lane (sub-row)** inside the project's one larger row. The project name stays once, on the left, and links to the project.
+
+```
+Project          Lane (warehouse)    latest   cells (that warehouse's pipeline, left to right)
+┌──────────────┬──────────────────┬────────┬─────────────────────────────────┐
+│ team-ada     │ akkoma-main      │ 1.4.2  │ dev 1.4.2   release 1.4.0       │
+│              ├──────────────────┼────────┼─────────────────────────────────┤
+│              │ akkoma-release   │ 2.0.1  │ staging 2.0.1   prod 1.9.9      │
+├──────────────┼──────────────────┼────────┼─────────────────────────────────┤
+│ demo-rollouts│                  │ 50-blue│ dev  staging  prod  ...         │   ← singular `warehouse`: unchanged, no lane caption
+└──────────────┴──────────────────┴────────┴─────────────────────────────────┘
+```
+
+### 13.2 Live facts that shape the design (captured 2026-10-14)
+- `config.json` already contains `team-ada` with `warehouses: ["akkoma-main", "akkoma-release"]`. Today that key is **silently ignored**, so the project errors with "multiple warehouses; set `warehouse` in config". It is the ready-made live test case.
+- `team-ada` has two warehouses with **disjoint pipelines**: `akkoma-main` feeds `dev` then `release`; `akkoma-release` feeds `staging` then `prod`. Each stage requests Freight from exactly one warehouse here, so the lanes show different stages.
+- `sedemo-app-demo` is the opposite case: every stage requests both warehouses, so both lanes show the **same stage names** with different versions and decay. Fixtures for it already exist in `test/fixtures/sedemo-app-demo/`.
+- `gatekeeper-stage: {}` and `demo-snow: {}` each have a single warehouse, so omitting the key keeps working (one lane, no caption). A project with several warehouses and no key now shows all of them (D7).
+- All of this works with the data we already fetch. A stage's deployed Freight is keyed per warehouse (`status.freightHistory[0].items["Warehouse/<name>"]`), and `buildRow` already picks the entry for one warehouse, so decay and version logic are **already per-warehouse**.
+
+### 13.3 Impact assessment
+
+| Area | Impact | What changes |
+|---|---|---|
+| `stage-filter.js`, `stage-order.js`, `version.js`, `decay.js` | **None** | Already parameterised by a single warehouse. Reused once per lane. |
+| `config.js` | Small | Accept `warehouses`. Reject both `warehouse` and `warehouses` set, an empty list, non-strings, duplicates. Normalise to `projects.<p>.warehouses: string[]` (`[]` meaning "unspecified: use every warehouse the project has", `[x]` for singular) plus a flag recording whether the plural form was used. |
+| `kargo-client.js` | Small | `listStages` stops filtering by warehouse: one unfiltered `GET .../stages` per project (verified earlier to return all stages; `orderStages` already filters by warehouse). `listFreight` is still called **once per lane**. Calls per project: 1 warehouses + 1 stages + N freight, down from 1 + 2N. |
+| `summarize.js` | **Main work** | `selectWarehouse` becomes `selectWarehouses` (returns the chosen list; with nothing configured it returns **all** the project's warehouses, replacing the old "multiple warehouses" error). `summarizeProject` builds one **lane** per warehouse and assembles them into the row. Errors are isolated per lane (13.4 D3). |
+| View model (`/api/summary`) | **Breaking shape change** | Row gets `lanes[]`. See 13.5. The only consumer is the bundled page, so there is no external compatibility concern, but 6.7 must be updated. |
+| `public/app.js`, `style.css` | Medium | Row becomes a project label spanning N lanes. Lane caption shown only when the row has more than one lane. |
+| Tests | Medium | New cases below. Existing summarize tests assert on `row.latest` / `row.stages`, so they move to `row.lanes[0]`. |
+| Docs/config | Small | `README.md` config reference, `config.example.json`, `deploy/chart/values.yaml` (switch `sedemo-app-demo` to a two-lane example), PLAN 6.1/6.7/8. |
+| API load | Lower | Fewer calls per project than today. |
+| Risk | Low to medium | Mostly the UI layout and the changed view-model shape. No change to the Kargo API surface already verified. |
+
+### 13.4 Decisions (D7 owner-confirmed; the rest are recommended defaults)
+- **D1 Config shape.** `warehouses: ["a", "b"]`, a plain list of names whose order is the lane order. `warehouse` (singular) keeps working exactly as before. Setting both is a config error at startup. *Alternative not recommended now:* objects with per-lane options (`{name, displayName}`). Add later if needed.
+- **D2 Uniform view model.** Always emit `lanes[]`. A singular `warehouse` becomes one lane, and the UI shows no lane caption when there is only one lane, so existing rows look identical.
+- **D3 Error isolation.** Project-level failures (token, project fetch, no warehouses listed) stay a single error row. A **lane-level** failure (a listed warehouse doesn't exist, or its Freight fetch fails) shows an error inside that lane while the other lanes render.
+- **D4 Filters.** `includeStages` / `excludeStages` apply to **every lane** (one set per project, as now). No per-lane filters.
+- **D5 Same stage in several lanes** appears in each lane, showing that lane's warehouse's Freight, version and decay. A stage that has never received Freight from a lane's warehouse is Worse / "unknown" in that lane (existing behavior).
+- **D6 Links.** Project label links to the project. Cells link as today. Lane caption is plain text because the owner has not given a warehouse URL pattern.
+- **D7 No key given (owner decision, 2026-10-14).** If a project config names neither `warehouse` nor `warehouses`, **every warehouse the project has becomes a lane**, in the order Kargo lists them, sorted by name so the order is stable between refreshes. This replaces the previous "multiple warehouses; set `warehouse` in config" error, so `selectWarehouse`'s multiple-warehouses error and its test are removed. A project with exactly one warehouse is unchanged (one lane, no caption). A project with zero warehouses is still a project-level error ("project has no warehouses").
+
+### 13.5 View model (replaces 6.7 for the project row)
+
+```json
+{
+  "project": "team-ada",
+  "displayName": "team-ada",
+  "projectUrl": "https://.../project/team-ada",
+  "lanes": [
+    {
+      "warehouse": "akkoma-main",
+      "latest": { "version": "...", "freightName": "...", "freightUrl": "...", "createdAt": "..." },
+      "stages": [ { "name": "dev", "stageUrl": "...", "freightUrl": "...", "version": "...", "decay": { "behind": 0, "color": "#...", "label": "Good" } } ],
+      "error": null
+    }
+  ],
+  "showLaneCaptions": true,
+  "error": null
+}
+```
+
+`showLaneCaptions` is true when the plural `warehouses` form was given (even with one entry, honoring the explicit choice) **or** when the project resolved to more than one lane (including the no-key case). It is false for the singular `warehouse` form and for a no-key project with exactly one warehouse. Project-level `error` replaces all lanes. A project error row has `lanes: []`.
+
+### 13.6 Implementation steps (for the coding agent, in order)
+1. **config.js + tests:** parse and validate `warehouses` per 13.4 D1. Tests: valid list, both keys set, empty list, non-string entry, duplicate entries, singular unchanged, normalised output.
+2. **kargo-client.js + tests:** `listStages(project, token)` unfiltered. Update the mocked-fetch test for the new URL (`.../stages` with no query). Re-verify live that unfiltered stages for `team-ada` returns all four stages.
+3. **summarize.js + tests:**
+   - `selectWarehouses(available, configured[])`: preserves config order, per-name "not found" errors become lane errors, and the no-key case returns all available warehouses sorted by name (D7). Zero available is a project-level error.
+   - `buildLane(...)`: the current `buildRow` body, returning `{ warehouse, latest, stages, error }`. Keep `buildRow` as the project-level assembler.
+   - Tests (use the real fixtures): `sedemo-app-demo` with both warehouses gives two lanes with the same stage names and different versions and decay (`15`/Good vs `8e87771`/staging 5 behind); a missing warehouse among valid ones gives one lane error and one good lane; a freight-fetch failure for one lane does not affect the other; a singular `warehouse` gives exactly one lane with `showLaneCaptions: false`; **no key on a two-warehouse project (`sedemo-app-demo`) gives two lanes sorted by name with captions; no key on a one-warehouse project gives one lane with no caption; no key on a project with zero warehouses is a project-level error**; link fields still present in every lane.
+   - Add a small synthetic `team-ada` style fixture (disjoint pipelines) captured live, scrubbed the same way as the others, to `test/fixtures/team-ada/`.
+4. **Frontend:** project label cell spans all lanes (CSS grid with a left label column and a stack of lane grids, or `grid-row: span N`). Each lane is the existing `[latest][cells…]` strip, with a small warehouse caption on the left of the lane when `showLaneCaptions`. Lane error renders as the muted message inside that lane. Keep the dark/light themes, the horizontal scroll inside the lane, and a phone-width layout with no page-level horizontal scroll.
+5. **Docs/config:** README (config reference and example), `config.example.json`, `deploy/chart/values.yaml`, and the PLAN sections noted in 13.3.
+6. **Live verification** with the owner's `config.json` and token: render `team-ada` (two lanes, disjoint stages), `sedemo-app-demo` as `warehouses: [sedemo-app-demo, sedemo-app-demo-chart]` and again with **no key at all** (both must give the same two lanes), and one singular project (unchanged look). Take screenshots at about 1100px and about 390px wide.
+
+### 13.7 Acceptance criteria (all must hold)
+1. `npm test` passes, with the new cases above, and the previously passing tests still pass (updated only for the `lanes` shape).
+2. `team-ada` renders two lanes under one project label: `akkoma-main` shows `dev` and `release`; `akkoma-release` shows `staging` and `prod`. Versions and "behind" counts match an independent API read (the same cross-check method used for the original build).
+3. `sedemo-app-demo` with both warehouses listed shows two lanes with identical stage names and the chart lane's 5-behind / unknown results from before. With **neither key set** it renders the same two lanes, and the old "multiple warehouses" error no longer appears anywhere (code, tests, README).
+4. Singular-`warehouse` projects render exactly as before, with no lane captions.
+5. Both keys set fails at startup with a clear message. One bad warehouse name produces a lane error only.
+6. The project name links to the project page, on error rows too.
+7. No token or hostname appears in any new fixture, and `git grep` for the token value is clean.
+
+**Required report:** test summary; the `team-ada` and `sedemo-app-demo` live results in a table (lane, stage, dashboard version, API version, behind); screenshots at both widths; any deviation from 13.4 with the reason. Do not change architecture beyond what 13.3 lists; raise anything else with the owner first.
+
+### 13.8 Implementation notes (2026-10-14)
+- Done per 13.6 steps 1-4 and 6; step 5 covered the README, `config.example.json` and the PLAN markers.
+- **Deviation:** `deploy/chart/values.yaml` was left untouched. The owner had already added the plural form (`team-ada`) and several no-key projects there, which work under the new rules, so no edit was needed.
+- Phone-width caveat: captioned lanes show the latest cell and the first stage cell before the lane scrolls sideways. The page itself does not overflow.

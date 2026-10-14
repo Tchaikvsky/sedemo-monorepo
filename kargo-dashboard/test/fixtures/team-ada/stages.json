@@ -1,0 +1,432 @@
+{
+  "items": [
+    {
+      "metadata": {
+        "name": "dev"
+      },
+      "spec": {
+        "requestedFreight": [
+          {
+            "origin": {
+              "kind": "Warehouse",
+              "name": "akkoma-main"
+            },
+            "sources": {
+              "direct": true
+            }
+          }
+        ],
+        "promotionTemplate": {
+          "spec": {
+            "steps": [
+              {
+                "uses": "scrubbed"
+              }
+            ]
+          }
+        }
+      },
+      "status": {
+        "freightHistory": [
+          {
+            "id": "6be8c6600e4e1e13ad62541530adeeb19453f221",
+            "items": {
+              "Warehouse/akkoma-main": {
+                "name": "7652f324c17a31a8efa0e080ff64aafbf64c0c38",
+                "origin": {
+                  "kind": "Warehouse",
+                  "name": "akkoma-main"
+                },
+                "images": [
+                  {
+                    "repoURL": "ghcr.io/adamancini/akkoma",
+                    "tag": "main-20261007191005-0b131ede",
+                    "digest": "sha256:4c20dd6896300272c3bf04e1c46ae2d508f1a180cb5c41e133d2861a4a4293bd"
+                  }
+                ],
+                "charts": [
+                  {
+                    "repoURL": "oci://ghcr.io/adamancini/charts/akkoma",
+                    "version": "0.0.0-main.20261007191005.g0b131ede"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "16e08c7dd71c9d39a6f42f24d53e95489d9963a5",
+            "items": {
+              "Warehouse/akkoma-main": {
+                "name": "4a0f47e0010fea41332aaa0cb8eb412a6554b1dc",
+                "origin": {
+                  "kind": "Warehouse",
+                  "name": "akkoma-main"
+                },
+                "images": [
+                  {
+                    "repoURL": "ghcr.io/adamancini/akkoma",
+                    "tag": "main-20261006132015-6cfdb3e3",
+                    "digest": "sha256:4c20dd6896300272c3bf04e1c46ae2d508f1a180cb5c41e133d2861a4a4293bd"
+                  }
+                ],
+                "charts": [
+                  {
+                    "repoURL": "oci://ghcr.io/adamancini/charts/akkoma",
+                    "version": "0.0.0-main.20261006132015.g6cfdb3e3"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "16e08c7dd71c9d39a6f42f24d53e95489d9963a5",
+            "items": {
+              "Warehouse/akkoma-main": {
+                "name": "4a0f47e0010fea41332aaa0cb8eb412a6554b1dc",
+                "origin": {
+                  "kind": "Warehouse",
+                  "name": "akkoma-main"
+                },
+                "images": [
+                  {
+                    "repoURL": "ghcr.io/adamancini/akkoma",
+                    "tag": "main-20261006132015-6cfdb3e3",
+                    "digest": "sha256:4c20dd6896300272c3bf04e1c46ae2d508f1a180cb5c41e133d2861a4a4293bd"
+                  }
+                ],
+                "charts": [
+                  {
+                    "repoURL": "oci://ghcr.io/adamancini/charts/akkoma",
+                    "version": "0.0.0-main.20261006132015.g6cfdb3e3"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "name": "prod"
+      },
+      "spec": {
+        "requestedFreight": [
+          {
+            "origin": {
+              "kind": "Warehouse",
+              "name": "akkoma-release"
+            },
+            "sources": {
+              "stages": [
+                "staging"
+              ]
+            }
+          }
+        ],
+        "promotionTemplate": {
+          "spec": {
+            "steps": [
+              {
+                "uses": "scrubbed"
+              }
+            ]
+          }
+        }
+      },
+      "status": {
+        "freightHistory": [
+          {
+            "id": "94b884608bec5328f6c15f16fd506db49a6a64c6",
+            "items": {
+              "Warehouse/akkoma-release": {
+                "name": "5709334625a85aec17c9b5cb1ec05410ab2028a3",
+                "origin": {
+                  "kind": "Warehouse",
+                  "name": "akkoma-release"
+                },
+                "images": [
+                  {
+                    "repoURL": "ghcr.io/adamancini/akkoma",
+                    "tag": "v3.20.1",
+                    "digest": "sha256:4c20dd6896300272c3bf04e1c46ae2d508f1a180cb5c41e133d2861a4a4293bd"
+                  }
+                ],
+                "charts": [
+                  {
+                    "repoURL": "oci://ghcr.io/adamancini/charts/akkoma",
+                    "version": "0.8.7"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "8e50a906b12d0f8f63c803c879d299220d880ef0",
+            "items": {
+              "Warehouse/akkoma-release": {
+                "name": "01fdc075c625276d3879d84c5e8a235134b9deac",
+                "origin": {
+                  "kind": "Warehouse",
+                  "name": "akkoma-release"
+                },
+                "images": [
+                  {
+                    "repoURL": "ghcr.io/adamancini/akkoma",
+                    "tag": "v3.20.1",
+                    "digest": "sha256:4c20dd6896300272c3bf04e1c46ae2d508f1a180cb5c41e133d2861a4a4293bd"
+                  }
+                ],
+                "charts": [
+                  {
+                    "repoURL": "oci://ghcr.io/adamancini/charts/akkoma",
+                    "version": "0.8.6"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "8b6428efef3a1929a44a3cc4803940cb395d497f",
+            "items": {
+              "Warehouse/akkoma-release": {
+                "name": "e4b95932f985355a546f1ed0fd4e4baacf8280d9",
+                "origin": {
+                  "kind": "Warehouse",
+                  "name": "akkoma-release"
+                },
+                "images": [
+                  {
+                    "repoURL": "ghcr.io/adamancini/akkoma",
+                    "tag": "v3.20.1",
+                    "digest": "sha256:4c20dd6896300272c3bf04e1c46ae2d508f1a180cb5c41e133d2861a4a4293bd"
+                  }
+                ],
+                "charts": [
+                  {
+                    "repoURL": "oci://ghcr.io/adamancini/charts/akkoma",
+                    "version": "0.8.5"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "name": "release"
+      },
+      "spec": {
+        "requestedFreight": [
+          {
+            "origin": {
+              "kind": "Warehouse",
+              "name": "akkoma-main"
+            },
+            "sources": {
+              "stages": [
+                "dev"
+              ]
+            }
+          }
+        ],
+        "promotionTemplate": {
+          "spec": {
+            "steps": [
+              {
+                "uses": "scrubbed"
+              }
+            ]
+          }
+        }
+      },
+      "status": {
+        "freightHistory": [
+          {
+            "id": "6be8c6600e4e1e13ad62541530adeeb19453f221",
+            "items": {
+              "Warehouse/akkoma-main": {
+                "name": "7652f324c17a31a8efa0e080ff64aafbf64c0c38",
+                "origin": {
+                  "kind": "Warehouse",
+                  "name": "akkoma-main"
+                },
+                "images": [
+                  {
+                    "repoURL": "ghcr.io/adamancini/akkoma",
+                    "tag": "main-20261007191005-0b131ede",
+                    "digest": "sha256:4c20dd6896300272c3bf04e1c46ae2d508f1a180cb5c41e133d2861a4a4293bd"
+                  }
+                ],
+                "charts": [
+                  {
+                    "repoURL": "oci://ghcr.io/adamancini/charts/akkoma",
+                    "version": "0.0.0-main.20261007191005.g0b131ede"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "6be8c6600e4e1e13ad62541530adeeb19453f221",
+            "items": {
+              "Warehouse/akkoma-main": {
+                "name": "7652f324c17a31a8efa0e080ff64aafbf64c0c38",
+                "origin": {
+                  "kind": "Warehouse",
+                  "name": "akkoma-main"
+                },
+                "images": [
+                  {
+                    "repoURL": "ghcr.io/adamancini/akkoma",
+                    "tag": "main-20261007191005-0b131ede",
+                    "digest": "sha256:4c20dd6896300272c3bf04e1c46ae2d508f1a180cb5c41e133d2861a4a4293bd"
+                  }
+                ],
+                "charts": [
+                  {
+                    "repoURL": "oci://ghcr.io/adamancini/charts/akkoma",
+                    "version": "0.0.0-main.20261007191005.g0b131ede"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "6be8c6600e4e1e13ad62541530adeeb19453f221",
+            "items": {
+              "Warehouse/akkoma-main": {
+                "name": "7652f324c17a31a8efa0e080ff64aafbf64c0c38",
+                "origin": {
+                  "kind": "Warehouse",
+                  "name": "akkoma-main"
+                },
+                "images": [
+                  {
+                    "repoURL": "ghcr.io/adamancini/akkoma",
+                    "tag": "main-20261007191005-0b131ede",
+                    "digest": "sha256:4c20dd6896300272c3bf04e1c46ae2d508f1a180cb5c41e133d2861a4a4293bd"
+                  }
+                ],
+                "charts": [
+                  {
+                    "repoURL": "oci://ghcr.io/adamancini/charts/akkoma",
+                    "version": "0.0.0-main.20261007191005.g0b131ede"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "name": "staging"
+      },
+      "spec": {
+        "requestedFreight": [
+          {
+            "origin": {
+              "kind": "Warehouse",
+              "name": "akkoma-release"
+            },
+            "sources": {
+              "direct": true
+            }
+          }
+        ],
+        "promotionTemplate": {
+          "spec": {
+            "steps": [
+              {
+                "uses": "scrubbed"
+              }
+            ]
+          }
+        }
+      },
+      "status": {
+        "freightHistory": [
+          {
+            "id": "94b884608bec5328f6c15f16fd506db49a6a64c6",
+            "items": {
+              "Warehouse/akkoma-release": {
+                "name": "5709334625a85aec17c9b5cb1ec05410ab2028a3",
+                "origin": {
+                  "kind": "Warehouse",
+                  "name": "akkoma-release"
+                },
+                "images": [
+                  {
+                    "repoURL": "ghcr.io/adamancini/akkoma",
+                    "tag": "v3.20.1",
+                    "digest": "sha256:4c20dd6896300272c3bf04e1c46ae2d508f1a180cb5c41e133d2861a4a4293bd"
+                  }
+                ],
+                "charts": [
+                  {
+                    "repoURL": "oci://ghcr.io/adamancini/charts/akkoma",
+                    "version": "0.8.7"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "8e50a906b12d0f8f63c803c879d299220d880ef0",
+            "items": {
+              "Warehouse/akkoma-release": {
+                "name": "01fdc075c625276d3879d84c5e8a235134b9deac",
+                "origin": {
+                  "kind": "Warehouse",
+                  "name": "akkoma-release"
+                },
+                "images": [
+                  {
+                    "repoURL": "ghcr.io/adamancini/akkoma",
+                    "tag": "v3.20.1",
+                    "digest": "sha256:4c20dd6896300272c3bf04e1c46ae2d508f1a180cb5c41e133d2861a4a4293bd"
+                  }
+                ],
+                "charts": [
+                  {
+                    "repoURL": "oci://ghcr.io/adamancini/charts/akkoma",
+                    "version": "0.8.6"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "8b6428efef3a1929a44a3cc4803940cb395d497f",
+            "items": {
+              "Warehouse/akkoma-release": {
+                "name": "e4b95932f985355a546f1ed0fd4e4baacf8280d9",
+                "origin": {
+                  "kind": "Warehouse",
+                  "name": "akkoma-release"
+                },
+                "images": [
+                  {
+                    "repoURL": "ghcr.io/adamancini/akkoma",
+                    "tag": "v3.20.1",
+                    "digest": "sha256:4c20dd6896300272c3bf04e1c46ae2d508f1a180cb5c41e133d2861a4a4293bd"
+                  }
+                ],
+                "charts": [
+                  {
+                    "repoURL": "oci://ghcr.io/adamancini/charts/akkoma",
+                    "version": "0.8.5"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
