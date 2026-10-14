@@ -1,0 +1,718 @@
+{
+  "groups": {
+    "": {
+      "items": [
+        {
+          "alias": "gauche-dragon",
+          "origin": {
+            "kind": "Warehouse",
+            "name": "sedemo-app-demo-chart"
+          },
+          "metadata": {
+            "name": "573b4ccf421c12873a3c621fb24b7551698fdf89",
+            "creationTimestamp": "2026-01-20T20:46:37Z"
+          },
+          "commits": [
+            {
+              "repoURL": "https://github.com/akuity/sedemo-platform",
+              "id": "0256ae35c15638ef3533ec4b948bcdd2e2b65356"
+            }
+          ]
+        },
+        {
+          "alias": "orderly-crocodile",
+          "origin": {
+            "kind": "Warehouse",
+            "name": "sedemo-app-demo"
+          },
+          "metadata": {
+            "name": "5bd9dad168d35af7e89e96c77b715281320afa2b",
+            "creationTimestamp": "2026-01-20T21:42:46Z"
+          },
+          "images": [
+            {
+              "repoURL": "ghcr.io/akuity/sedemo-app-demo",
+              "tag": "3",
+              "digest": "sha256:ed4ad8ecc31a29a1e35ee3a4a4b55e2eca950a73ea23c112b8f2fcd269773def"
+            }
+          ],
+          "commits": [
+            {
+              "repoURL": "https://github.com/akuity/sedemo-app-demo",
+              "id": "36ccd0d9bf44c1a5dff1c9a255b8557d2f54e565"
+            }
+          ]
+        },
+        {
+          "alias": "lame-oyster",
+          "origin": {
+            "kind": "Warehouse",
+            "name": "sedemo-app-demo"
+          },
+          "metadata": {
+            "name": "eef852c0f2e1f4e0e49e7e95ef6a0818992f6755",
+            "creationTimestamp": "2026-02-09T18:26:32Z"
+          },
+          "images": [
+            {
+              "repoURL": "ghcr.io/akuity/sedemo-app-demo",
+              "tag": "3",
+              "digest": "sha256:ed4ad8ecc31a29a1e35ee3a4a4b55e2eca950a73ea23c112b8f2fcd269773def"
+            }
+          ],
+          "commits": [
+            {
+              "repoURL": "https://github.com/akuity/sedemo-app-demo",
+              "id": "544b40af971627e2e2add15b4d7d7050f7d1bc41"
+            }
+          ]
+        },
+        {
+          "alias": "kind-kangaroo",
+          "origin": {
+            "kind": "Warehouse",
+            "name": "sedemo-app-demo"
+          },
+          "metadata": {
+            "name": "a44725e3b50215a191b01234d6c06e01491f61ab",
+            "creationTimestamp": "2026-02-09T18:27:47Z"
+          },
+          "images": [
+            {
+              "repoURL": "ghcr.io/akuity/sedemo-app-demo",
+              "tag": "4",
+              "digest": "sha256:b002f92f9d7fc32a2f977d6c0be90467aee8edae30a784909a8bdf054e9dabfb"
+            }
+          ],
+          "commits": [
+            {
+              "repoURL": "https://github.com/akuity/sedemo-app-demo",
+              "id": "544b40af971627e2e2add15b4d7d7050f7d1bc41"
+            }
+          ]
+        },
+        {
+          "alias": "prodding-mule",
+          "origin": {
+            "kind": "Warehouse",
+            "name": "sedemo-app-demo"
+          },
+          "metadata": {
+            "name": "0e3b7fc6a076dba02cc44e9baa7fd0b8945d2306",
+            "creationTimestamp": "2026-02-09T19:20:29Z"
+          },
+          "images": [
+            {
+              "repoURL": "ghcr.io/akuity/sedemo-app-demo",
+              "tag": "5",
+              "digest": "sha256:84d825e06a9936aa5c9adc4fab13a75a99886b647f0dc9bad5ebdb3cdbe1626e"
+            }
+          ],
+          "commits": [
+            {
+              "repoURL": "https://github.com/akuity/sedemo-app-demo",
+              "id": "6bbf936fea563aa45c42db5a0c6cc3b8e317e07a"
+            }
+          ]
+        },
+        {
+          "alias": "orderly-numbat",
+          "origin": {
+            "kind": "Warehouse",
+            "name": "sedemo-app-demo"
+          },
+          "metadata": {
+            "name": "84aa33cd565166ead2b915ef15fc8e12bf4e6bb8",
+            "creationTimestamp": "2026-03-12T12:57:22Z"
+          },
+          "images": [
+            {
+              "repoURL": "ghcr.io/akuity/sedemo-app-demo",
+              "tag": "6",
+              "digest": "sha256:81d3ad82c81f35225fd7945cb2c094ff2afc731b4d8f46876cbc19491504f109"
+            }
+          ],
+          "commits": [
+            {
+              "repoURL": "https://github.com/akuity/sedemo-app-demo",
+              "id": "e8a08d25e6c6258f7ee53317adac773a9c70819c"
+            }
+          ]
+        },
+        {
+          "alias": "newbie-duck",
+          "origin": {
+            "kind": "Warehouse",
+            "name": "sedemo-app-demo-chart"
+          },
+          "metadata": {
+            "name": "572104d9f09cb11633495079ae7d5f72b9ec2ce2",
+            "creationTimestamp": "2026-03-12T15:40:47Z"
+          },
+          "commits": [
+            {
+              "repoURL": "https://github.com/akuity/sedemo-platform",
+              "id": "f5b95c6a55eede0b45d1c0ee8771b9d0f6a71519"
+            }
+          ]
+        },
+        {
+          "alias": "nomadic-armadillo",
+          "origin": {
+            "kind": "Warehouse",
+            "name": "sedemo-app-demo"
+          },
+          "metadata": {
+            "name": "39259f9798b6b48144694178ed1369ef5cf428bc",
+            "creationTimestamp": "2026-03-19T19:52:55Z"
+          },
+          "images": [
+            {
+              "repoURL": "ghcr.io/akuity/sedemo-app-demo",
+              "tag": "7",
+              "digest": "sha256:7c49bf3550a6c9923dfd2dff32683d041851e1ae86d949deb104910d1f251663"
+            }
+          ],
+          "commits": [
+            {
+              "repoURL": "https://github.com/akuity/sedemo-app-demo",
+              "id": "095e2b5e4b21bd9398894935cfa1893fdd730a55"
+            }
+          ]
+        },
+        {
+          "alias": "orderly-dachshund",
+          "origin": {
+            "kind": "Warehouse",
+            "name": "sedemo-app-demo"
+          },
+          "metadata": {
+            "name": "5b99ddfd4ea474c4a14dc7f9e3067767f2527e1e",
+            "creationTimestamp": "2026-03-19T20:08:06Z"
+          },
+          "images": [
+            {
+              "repoURL": "ghcr.io/akuity/sedemo-app-demo",
+              "tag": "8",
+              "digest": "sha256:aa3f4a9d0716b46bbe93f7b628249d6c908c1909706d431703165667c1e1f756"
+            }
+          ],
+          "commits": [
+            {
+              "repoURL": "https://github.com/akuity/sedemo-app-demo",
+              "id": "5350d275aa217b687742dafb28c9411be96223f6"
+            }
+          ]
+        },
+        {
+          "alias": "riotous-bird",
+          "origin": {
+            "kind": "Warehouse",
+            "name": "sedemo-app-demo"
+          },
+          "metadata": {
+            "name": "261a6b2f13718af21fe28054b89821789a34ae19",
+            "creationTimestamp": "2026-03-19T20:23:15Z"
+          },
+          "images": [
+            {
+              "repoURL": "ghcr.io/akuity/sedemo-app-demo",
+              "tag": "8",
+              "digest": "sha256:aa3f4a9d0716b46bbe93f7b628249d6c908c1909706d431703165667c1e1f756"
+            }
+          ],
+          "commits": [
+            {
+              "repoURL": "https://github.com/akuity/sedemo-app-demo",
+              "id": "b00b92cd9feb01d473daf846f5b1f5b6b2dab376"
+            }
+          ]
+        },
+        {
+          "alias": "singing-turkey",
+          "origin": {
+            "kind": "Warehouse",
+            "name": "sedemo-app-demo"
+          },
+          "metadata": {
+            "name": "8302b739a6d617d3fd957b3cd22ba3eecea8427f",
+            "creationTimestamp": "2026-03-19T20:28:19Z"
+          },
+          "images": [
+            {
+              "repoURL": "ghcr.io/akuity/sedemo-app-demo",
+              "tag": "8",
+              "digest": "sha256:aa3f4a9d0716b46bbe93f7b628249d6c908c1909706d431703165667c1e1f756"
+            }
+          ],
+          "commits": [
+            {
+              "repoURL": "https://github.com/akuity/sedemo-app-demo",
+              "id": "c1b5fd67fda34945988bddd01c07352c1e1fd694"
+            }
+          ]
+        },
+        {
+          "alias": "punk-labradoodle",
+          "origin": {
+            "kind": "Warehouse",
+            "name": "sedemo-app-demo"
+          },
+          "metadata": {
+            "name": "9fc6be2ec54f6868f2f350946d19dfa16759f3ec",
+            "creationTimestamp": "2026-03-19T20:33:22Z"
+          },
+          "images": [
+            {
+              "repoURL": "ghcr.io/akuity/sedemo-app-demo",
+              "tag": "8",
+              "digest": "sha256:aa3f4a9d0716b46bbe93f7b628249d6c908c1909706d431703165667c1e1f756"
+            }
+          ],
+          "commits": [
+            {
+              "repoURL": "https://github.com/akuity/sedemo-app-demo",
+              "id": "2477c95006ae9e969d5d2e870dec5b0b5a8dd4d4"
+            }
+          ]
+        },
+        {
+          "alias": "killjoy-eel",
+          "origin": {
+            "kind": "Warehouse",
+            "name": "sedemo-app-demo"
+          },
+          "metadata": {
+            "name": "65c844c72340e28eb1be72ebbda07871db475305",
+            "creationTimestamp": "2026-03-19T20:38:25Z"
+          },
+          "images": [
+            {
+              "repoURL": "ghcr.io/akuity/sedemo-app-demo",
+              "tag": "8",
+              "digest": "sha256:aa3f4a9d0716b46bbe93f7b628249d6c908c1909706d431703165667c1e1f756"
+            }
+          ],
+          "commits": [
+            {
+              "repoURL": "https://github.com/akuity/sedemo-app-demo",
+              "id": "12fb4cbf8b646bee08eb05263acb5e397ea9da98"
+            }
+          ]
+        },
+        {
+          "alias": "exciting-lamb",
+          "origin": {
+            "kind": "Warehouse",
+            "name": "sedemo-app-demo"
+          },
+          "metadata": {
+            "name": "943c28f4aa2deaca1e2c59f6fca56bc4ba9c5a45",
+            "creationTimestamp": "2026-03-19T20:53:38Z"
+          },
+          "images": [
+            {
+              "repoURL": "ghcr.io/akuity/sedemo-app-demo",
+              "tag": "8",
+              "digest": "sha256:aa3f4a9d0716b46bbe93f7b628249d6c908c1909706d431703165667c1e1f756"
+            }
+          ],
+          "commits": [
+            {
+              "repoURL": "https://github.com/akuity/sedemo-app-demo",
+              "id": "b62127637b9adc44174ed601b69cc82d0e90f131"
+            }
+          ]
+        },
+        {
+          "alias": "exasperated-skunk",
+          "origin": {
+            "kind": "Warehouse",
+            "name": "sedemo-app-demo"
+          },
+          "metadata": {
+            "name": "f27c959bb2ae5b2607cfe2e44bfd94df65e4541e",
+            "creationTimestamp": "2026-03-23T13:51:58Z"
+          },
+          "images": [
+            {
+              "repoURL": "ghcr.io/akuity/sedemo-app-demo",
+              "tag": "8",
+              "digest": "sha256:aa3f4a9d0716b46bbe93f7b628249d6c908c1909706d431703165667c1e1f756"
+            }
+          ],
+          "commits": [
+            {
+              "repoURL": "https://github.com/akuity/sedemo-app-demo",
+              "id": "66937467b214f4e9e699bf820828ba5b07bd900d"
+            }
+          ]
+        },
+        {
+          "alias": "lumpy-yak",
+          "origin": {
+            "kind": "Warehouse",
+            "name": "sedemo-app-demo"
+          },
+          "metadata": {
+            "name": "c92b4808695cf2d4cacfd5e3c8c78201aaa7d687",
+            "creationTimestamp": "2026-03-23T13:57:03Z"
+          },
+          "images": [
+            {
+              "repoURL": "ghcr.io/akuity/sedemo-app-demo",
+              "tag": "9",
+              "digest": "sha256:d1352ba9905dddf7ab21ff7c4d6aefd8ee6b774cb9a5e2ceeabb4942b3171707"
+            }
+          ],
+          "commits": [
+            {
+              "repoURL": "https://github.com/akuity/sedemo-app-demo",
+              "id": "66937467b214f4e9e699bf820828ba5b07bd900d"
+            }
+          ]
+        },
+        {
+          "alias": "boiling-hare",
+          "origin": {
+            "kind": "Warehouse",
+            "name": "sedemo-app-demo"
+          },
+          "metadata": {
+            "name": "2a14dbb2b23e76a80068522ee040536b094ec651",
+            "creationTimestamp": "2026-03-24T09:27:12Z"
+          },
+          "images": [
+            {
+              "repoURL": "ghcr.io/akuity/sedemo-app-demo",
+              "tag": "9",
+              "digest": "sha256:d1352ba9905dddf7ab21ff7c4d6aefd8ee6b774cb9a5e2ceeabb4942b3171707"
+            }
+          ],
+          "commits": [
+            {
+              "repoURL": "https://github.com/akuity/sedemo-app-demo",
+              "id": "b62127637b9adc44174ed601b69cc82d0e90f131"
+            }
+          ]
+        },
+        {
+          "alias": "harping-dachshund",
+          "origin": {
+            "kind": "Warehouse",
+            "name": "sedemo-app-demo"
+          },
+          "metadata": {
+            "name": "740a8f4568eaf41054c3804910a8b517b7dc401e",
+            "creationTimestamp": "2026-03-24T14:08:32Z"
+          },
+          "images": [
+            {
+              "repoURL": "ghcr.io/akuity/sedemo-app-demo",
+              "tag": "9",
+              "digest": "sha256:d1352ba9905dddf7ab21ff7c4d6aefd8ee6b774cb9a5e2ceeabb4942b3171707"
+            }
+          ],
+          "commits": [
+            {
+              "repoURL": "https://github.com/akuity/sedemo-app-demo",
+              "id": "53eac973905377890bf7b08a9ba69d1da0943b12"
+            }
+          ]
+        },
+        {
+          "alias": "solid-platypus",
+          "origin": {
+            "kind": "Warehouse",
+            "name": "sedemo-app-demo"
+          },
+          "metadata": {
+            "name": "e01cdd9dfb194e8b11f36d3948d96bba851730b4",
+            "creationTimestamp": "2026-04-03T14:01:58Z"
+          },
+          "images": [
+            {
+              "repoURL": "ghcr.io/akuity/sedemo-app-demo",
+              "tag": "9",
+              "digest": "sha256:d1352ba9905dddf7ab21ff7c4d6aefd8ee6b774cb9a5e2ceeabb4942b3171707"
+            }
+          ],
+          "commits": [
+            {
+              "repoURL": "https://github.com/akuity/sedemo-app-demo",
+              "id": "a1807038363469ea6d370afc7ddd628533128544"
+            }
+          ]
+        },
+        {
+          "alias": "foolish-wombat",
+          "origin": {
+            "kind": "Warehouse",
+            "name": "sedemo-app-demo"
+          },
+          "metadata": {
+            "name": "124f434be720a410065bdab7456130427e8134d3",
+            "creationTimestamp": "2026-04-03T14:12:06Z"
+          },
+          "images": [
+            {
+              "repoURL": "ghcr.io/akuity/sedemo-app-demo",
+              "tag": "9",
+              "digest": "sha256:d1352ba9905dddf7ab21ff7c4d6aefd8ee6b774cb9a5e2ceeabb4942b3171707"
+            }
+          ],
+          "commits": [
+            {
+              "repoURL": "https://github.com/akuity/sedemo-app-demo",
+              "id": "8f7b8982ab6558b81f0e0735239ec422c698ae28"
+            }
+          ]
+        },
+        {
+          "alias": "sappy-quail",
+          "origin": {
+            "kind": "Warehouse",
+            "name": "sedemo-app-demo-chart"
+          },
+          "metadata": {
+            "name": "0ac9178e56749e0971360358285257c595e6037d",
+            "creationTimestamp": "2026-04-22T13:41:18Z"
+          },
+          "commits": [
+            {
+              "repoURL": "https://github.com/akuity/sedemo-platform",
+              "id": "bd4d199614d0db10f82b119fa8b2e0d778af60da"
+            }
+          ]
+        },
+        {
+          "alias": "exciting-fly",
+          "origin": {
+            "kind": "Warehouse",
+            "name": "sedemo-app-demo"
+          },
+          "metadata": {
+            "name": "a880f330be9059a1ab9a86f96902112cf728666b",
+            "creationTimestamp": "2026-05-21T16:20:51Z"
+          },
+          "images": [
+            {
+              "repoURL": "ghcr.io/akuity/sedemo-app-demo",
+              "tag": "9",
+              "digest": "sha256:d1352ba9905dddf7ab21ff7c4d6aefd8ee6b774cb9a5e2ceeabb4942b3171707"
+            }
+          ],
+          "commits": [
+            {
+              "repoURL": "https://github.com/akuity/sedemo-app-demo",
+              "id": "36ccd0d9bf44c1a5dff1c9a255b8557d2f54e565"
+            }
+          ]
+        },
+        {
+          "alias": "alert-lizard",
+          "discoveredAt": "2026-08-11T19:20:18Z",
+          "origin": {
+            "kind": "Warehouse",
+            "name": "sedemo-app-demo-chart"
+          },
+          "metadata": {
+            "name": "2b0af253002e9525fe71f4fa04060bc2a21556fe",
+            "creationTimestamp": "2026-08-11T19:20:18Z"
+          },
+          "commits": [
+            {
+              "repoURL": "https://github.com/akuity/sedemo-platform",
+              "id": "80376ed352db5c7ee6c4ba162cb55357cdc78f63"
+            }
+          ]
+        },
+        {
+          "alias": "vested-macaw",
+          "discoveredAt": "2026-08-11T19:24:07Z",
+          "origin": {
+            "kind": "Warehouse",
+            "name": "sedemo-app-demo-chart"
+          },
+          "metadata": {
+            "name": "f450b5d719d6e40f8704dd3f57c774ae88a0d35a",
+            "creationTimestamp": "2026-08-11T19:24:07Z"
+          },
+          "commits": [
+            {
+              "repoURL": "https://github.com/akuity/sedemo-platform",
+              "id": "4aca0f47d1462d1d8d34456361ee468f32efc263"
+            }
+          ],
+          "status": {
+            "currentlyIn": {
+              "staging": {
+                "since": "2026-09-03T18:49:26Z"
+              }
+            }
+          }
+        },
+        {
+          "alias": "wonderful-wallaby",
+          "discoveredAt": "2026-10-05T18:27:32Z",
+          "origin": {
+            "kind": "Warehouse",
+            "name": "sedemo-app-demo"
+          },
+          "metadata": {
+            "name": "f2fdd230b6c462b48c32b370da4799ec8c3954c5",
+            "creationTimestamp": "2026-10-05T18:27:32Z"
+          },
+          "images": [
+            {
+              "repoURL": "ghcr.io/akuity/sedemo-app-demo",
+              "tag": "13",
+              "digest": "sha256:71fd01c330994e5801362cc616f1ee9efc90fbe9e5e76e710a69caed4464968d"
+            }
+          ],
+          "commits": [
+            {
+              "repoURL": "https://github.com/akuity/sedemo-app-demo",
+              "id": "8dc8538e55506c5da499c3e48e3543ac95233e35"
+            }
+          ]
+        },
+        {
+          "alias": "sullen-sheep",
+          "discoveredAt": "2026-10-05T18:37:15Z",
+          "origin": {
+            "kind": "Warehouse",
+            "name": "sedemo-app-demo"
+          },
+          "metadata": {
+            "name": "8e60e95cfee74522800046d790c68b58f6769749",
+            "creationTimestamp": "2026-10-05T18:37:15Z"
+          },
+          "images": [
+            {
+              "repoURL": "ghcr.io/akuity/sedemo-app-demo",
+              "tag": "15",
+              "digest": "sha256:0fb43a7eb573fb29ca3fd4f013c61fb52ec83d262cd1f39b6b8d37512808a2ff"
+            }
+          ],
+          "commits": [
+            {
+              "repoURL": "https://github.com/akuity/sedemo-app-demo",
+              "id": "c6c43af89b9c1bb90ed963a12cb3dffd0e9c8561"
+            }
+          ],
+          "status": {
+            "currentlyIn": {
+              "dev": {
+                "since": "2026-10-05T18:38:23Z"
+              },
+              "prod": {
+                "since": "2026-10-05T18:53:58Z"
+              },
+              "staging": {
+                "since": "2026-10-05T18:45:07Z"
+              }
+            }
+          }
+        },
+        {
+          "alias": "understood-chicken",
+          "discoveredAt": "2026-10-06T13:04:06Z",
+          "origin": {
+            "kind": "Warehouse",
+            "name": "sedemo-app-demo-chart"
+          },
+          "metadata": {
+            "name": "776110c5b8c49422907efd986b69eabfe3f6c3c0",
+            "creationTimestamp": "2026-10-06T13:04:06Z"
+          },
+          "commits": [
+            {
+              "repoURL": "https://github.com/akuity/sedemo-platform",
+              "id": "2450ffb1edaccda18eaecbdadf76b04b271d2d67"
+            }
+          ]
+        },
+        {
+          "alias": "intent-wolverine",
+          "discoveredAt": "2026-10-06T13:29:10Z",
+          "origin": {
+            "kind": "Warehouse",
+            "name": "sedemo-app-demo-chart"
+          },
+          "metadata": {
+            "name": "6a2aeee9e789184437665976ad47514823f41f7e",
+            "creationTimestamp": "2026-10-06T13:29:10Z"
+          },
+          "commits": [
+            {
+              "repoURL": "https://github.com/akuity/sedemo-platform",
+              "id": "f882ff8e1bcaaca0bdea47cfd71b4c01bd5ea437"
+            }
+          ]
+        },
+        {
+          "alias": "broken-garfish",
+          "discoveredAt": "2026-10-06T17:19:53Z",
+          "origin": {
+            "kind": "Warehouse",
+            "name": "sedemo-app-demo-chart"
+          },
+          "metadata": {
+            "name": "347fa8708f384272974a10118e9e4cb3788859a5",
+            "creationTimestamp": "2026-10-06T17:19:53Z"
+          },
+          "commits": [
+            {
+              "repoURL": "https://github.com/akuity/sedemo-platform",
+              "id": "e3f7c3a059c46d70c2ac0f22d180f442716e9e98"
+            }
+          ]
+        },
+        {
+          "alias": "belligerent-aardvark",
+          "discoveredAt": "2026-10-06T18:20:04Z",
+          "origin": {
+            "kind": "Warehouse",
+            "name": "sedemo-app-demo-chart"
+          },
+          "metadata": {
+            "name": "7cbf7e6f204cae5a8103d0912419262f761458ca",
+            "creationTimestamp": "2026-10-06T18:20:04Z"
+          },
+          "commits": [
+            {
+              "repoURL": "https://github.com/akuity/sedemo-platform",
+              "id": "70d40e06279b5aa2549ea67b39458498f4c261bc"
+            }
+          ]
+        },
+        {
+          "alias": "virtuous-panda",
+          "discoveredAt": "2026-10-06T18:30:13Z",
+          "origin": {
+            "kind": "Warehouse",
+            "name": "sedemo-app-demo-chart"
+          },
+          "metadata": {
+            "name": "efaffd630ee80566f420f5b750b1271ebe5de631",
+            "creationTimestamp": "2026-10-06T18:30:14Z"
+          },
+          "commits": [
+            {
+              "repoURL": "https://github.com/akuity/sedemo-platform",
+              "id": "8e87771eb4d4f816958c6436b932050cd4b5621d"
+            }
+          ],
+          "status": {
+            "currentlyIn": {
+              "dev": {
+                "since": "2026-10-06T18:31:25Z"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

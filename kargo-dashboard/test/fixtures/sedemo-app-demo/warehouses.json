@@ -1,0 +1,60 @@
+{
+  "items": [
+    {
+      "metadata": {
+        "name": "sedemo-app-demo"
+      },
+      "spec": {
+        "subscriptions": [
+          {
+            "image": {
+              "allowTagsRegexes": [
+                "^\\d*$"
+              ],
+              "discoveryLimit": 20,
+              "imageSelectionStrategy": "SemVer",
+              "repoURL": "ghcr.io/akuity/sedemo-app-demo",
+              "strictSemvers": false
+            }
+          },
+          {
+            "git": {
+              "commitSelectionStrategy": "NewestFromBranch",
+              "discoveryLimit": 20,
+              "includePaths": [
+                "."
+              ],
+              "repoURL": "https://github.com/akuity/sedemo-app-demo",
+              "strictSemvers": true
+            }
+          }
+        ],
+        "freightCreationPolicy": "Automatic",
+        "freightCreationCriteria": {
+          "expression": "imageFrom('ghcr.io/akuity/sedemo-app-demo').Annotations['org.opencontainers.image.revision'] == commitFrom('https://github.com/akuity/sedemo-app-demo').ID\n"
+        }
+      }
+    },
+    {
+      "metadata": {
+        "name": "sedemo-app-demo-chart"
+      },
+      "spec": {
+        "subscriptions": [
+          {
+            "git": {
+              "commitSelectionStrategy": "NewestFromBranch",
+              "discoveryLimit": 20,
+              "includePaths": [
+                "templated-teams/apps-chart/"
+              ],
+              "repoURL": "https://github.com/akuity/sedemo-platform",
+              "strictSemvers": true
+            }
+          }
+        ],
+        "freightCreationPolicy": "Automatic"
+      }
+    }
+  ]
+}
