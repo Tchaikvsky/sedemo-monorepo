@@ -1,52 +1,112 @@
 # Kargo Dashboard
 
-This project is a lightweight node.js app that summarizes the current state of Kargo powered projects.  Specially visuallizing the currently deployed version of several projects across their shared environments.
+This project is a lightweight Node.js app that summarizes the current state of Kargo powered projects, specifically visualizing the currently deployed version of several projects across their environments.
 
 ## Visualization
 
-
-- Project Names are the y-axis row names
-- Each row many have an inconsistent number of cells, tied to number of stages in that project
-- Order of cells in a row matches the dependecnies defined by Kargo Stages
-- Individual cells show the version of that project deployed to that stage. 
-- Cell color is a visual color of the version decay (more below)
+- Project names are the y-axis row names
+- Each row may have an inconsistent number of cells, tied to the number of stages in that project
+- Order of cells in a row matches the dependencies defined by Kargo Stages
+- Individual cells show the version of that project deployed to that stage
+- Cell color is a visual indicator of the version decay (more below in Version Decay)
 - The first column in every row is the latest freight version
 
+The visual is agnostic to stage names: there are no stage-name columns and rows are not aligned by name. Each row is simply that project's pipeline, left to right. The stage name appears as a small caption inside its cell.
 
-
+Stages with no promotion steps ("control flow" stages) never hold Freight, so they are not drawn, though they still count when ordering the pipeline.
 
 ## Requirements
 
-- Kargo projects must use consistent Stage names
-- Customizations and settings live in config.json
-- "Version" is the `Tag` of the first matching `image` of the first subscription.
-
+- Node.js 22 or later
+- A Kargo API token with read access to each configured project (see [API token](#api-token))
+- Customizations and settings live in `config.json`
+- "Version" is determined from the warehouse's subscriptions:
+  1. The first subscription that is an `image` or a `chart`: the image `Tag`, or the chart `version`, of the matching artifact in the Freight.
+  2. Only if the warehouse has neither: the short (7 character) SHA of the first `git` subscription's commit.
 
 ## Version Decay
 
-Version decay is a visual indicator of idle inventory; meaning versions built but not yet delivered into higher environments.
+Version decay is a visual indicator of idle inventory; meaning versions built but not yet delivered into higher environments. The greater the count of freight objects between latest freight and currently deployed, the higher the considered "decay" to be.
 
+Essentially this is the measure of how far out of date any environment or stage is. Only Freight from the configured warehouse is counted.
 
+The color scheme is customizable (`decay.thresholds`), and defaults to Good, OK, Bad, Worse:
 
+| Versions behind latest | Label | Meaning |
+|---|---|---|
+| 0 | Good | up to date |
+| 1 | OK | 1 version behind |
+| 2 to 3 | Bad | more than 1 and at most 3 behind (exactly 3 is Bad) |
+| 4 or more | Worse | more than 3 behind |
+
+A stage with nothing deployed, or whose Freight no longer exists, is shown as Worse with the label "unknown".
+
+Freight, not version strings, is what is counted. A new commit can produce a new Freight that carries the same image tag, so a stage can show the same version as "latest" and still be 1 behind.
+
+## Running
+
+```sh
+npm ci
+cp config.example.json config.json   # then edit
+export KARGO_TOKEN=...               # see "API token"
+npm start                            # listens on :8080
+```
+
+| Env var | Purpose |
+|---|---|
+| `CONFIG_PATH` | Config file location (default `./config.json`) |
+| `KARGO_URL` | Overrides `kargo.url` from the config |
+| `KARGO_TOKEN` | Default API token (the variable name is configurable, see `tokenEnv`) |
+| `PORT` | HTTP port (default `8080`) |
+
+Endpoints: `/` (the dashboard), `/api/summary` (the JSON behind it), `/healthz` (503 until the first refresh completes).
+
+Docker: `docker build -t kargo-dashboard .`, then run it with the config mounted at `/app/config.json` and the token passed as an environment variable. The image is published as `ghcr.io/akuity/sedemo-monorepo-kargo-dashboard` by `.github/workflows/publish-kargo-dashboard.yml`.
+
+Tests: `npm test`. The tests under `test/fixtures` are scrubbed responses captured from a live Kargo API.
 
 ## Configuration
 
-Configuration will include customizable features.
+See [`config.example.json`](config.example.json).
 
-- Projects to include, as a map with indivudal values.
-  - Which warehouse (by name) to consider
-  - Stages to exclude (regex if prefixed with `regex:` or full match otherwise)
-  - Stages to include (regex if prefixed with `regex:` or full match otherwise)
-  - Stages will first consider all includes, and then remove any excludes.  Absence of defined includes will include all, and then apply excludes if any.
+- `kargo.url`: the Kargo instance (or `KARGO_URL`)
+- `kargo.tokenEnv`: name of the env var holding the API token (default `KARGO_TOKEN`)
+- `refreshIntervalSeconds`: how often the server re-reads Kargo, and the page re-polls (default 30)
+- `decay.thresholds`: ascending list of `{ max, label, color }`, where `max` is the highest "versions behind" count the entry covers. Only the last entry may (and must) have `max: null`
+- Projects to include, as a map (key order is display order), with individual values:
+  - `displayName`: optional label
+  - `warehouse`: which warehouse (by name) to consider. Optional when the project has exactly one warehouse; required when it has several, otherwise the row shows an error
+  - `tokenEnv`: optional per-project token variable, overriding `kargo.tokenEnv`
+  - `excludeStages`: stages to exclude (regex if prefixed with `regex:`, or full match otherwise)
+  - `includeStages`: stages to include (regex if prefixed with `regex:`, or full match otherwise)
+  - Stages will first consider all includes, and then remove any excludes. Absence of defined includes will include all, and then apply excludes if any. Regexes are unanchored, so add `^` and `$` where needed.
 
+A project that fails (no access, unknown warehouse, several warehouses with none chosen) shows an error row; the other projects still render.
 
+## API token
+
+The dashboard only reads. The token's role needs `get`/`list` on `warehouses`, `stages` and `freight` in each project. A token that can only list projects authenticates but gets `403 ... list is not permitted` on everything else.
+
+Kargo's API describes both project-level tokens (`POST /v1beta1/projects/{project}/roles/{role}/api-tokens`) and system-level tokens (`POST /v1beta1/system/roles/{role}/api-tokens`). If one token can't cover every project, create one per project and point each project at its variable with `tokenEnv`. The token is only ever read from the environment; it is never written to the config, logs or error messages.
 
 # Resources
 
 ## Kargo Concepts
 
-- Freight is an immutable tuple representing container images and supporting git configurtaion
+- Freight is an immutable tuple representing container images and supporting git configuration
 - Stages define promotions into specific targets
-- Promption is an instance of moving freigth into a target
-- Warehouses define the source repositories and registries as subsriptions.
+- Promotion is an instance of moving freight into a target
+- Warehouses define the source repositories and registries as subscriptions.
 - Projects is the container for a pipeline or promotion flow where Warehouse, Freight, Stages, etc live.
+
+## Kargo API
+
+Kargo's API should expose all needed data. i.e. latest freight, what version is in each stage.
+
+This app uses the Kargo REST API (`/v1beta1`, verified against Kargo v1.12.1), with three read-only calls per project per refresh:
+
+- `GET /v1beta1/projects/{project}/warehouses`
+- `GET /v1beta1/projects/{project}/stages?freightOrigins={warehouse}`
+- `GET /v1beta1/projects/{project}/freight?origins={warehouse}`
+
+The current version of a stage comes from `status.freightHistory[0].items["Warehouse/{warehouse}"]`.
