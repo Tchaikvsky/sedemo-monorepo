@@ -1,0 +1,24 @@
+{
+  "kargo": {
+    "url": "https://kargo.akpdemoapps.link",
+    "tokenEnv": "KARGO_TOKEN"
+  },
+  "refreshIntervalSeconds": 30,
+  "decay": {
+    "thresholds": [
+      { "max": 0, "label": "Good", "color": "#2e7d32" },
+      { "max": 1, "label": "OK", "color": "#fdd835" },
+      { "max": 3, "label": "Bad", "color": "#fb8c00" },
+      { "max": null, "label": "Worse", "color": "#c62828" }
+    ]
+  },
+  "projects": {
+    "demo-rollouts": {
+      "displayName": "Rollouts Demo",
+      "warehouse": "demo-rollouts"
+    },
+    "sedemo-app-demo": {
+      "warehouse": "sedemo-app-demo"
+    }
+  }
+}
