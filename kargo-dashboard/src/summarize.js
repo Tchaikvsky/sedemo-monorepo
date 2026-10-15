@@ -102,34 +102,35 @@ export function errorRow(project, projectConfig, message, kargoUrl) {
   };
 }
 
-// Fetches and builds one project's row. Never throws. Project-level failures (token, project
-// fetch, no warehouses) become an error row; a lane's own failure stays inside that lane.
-export async function summarizeProject({ client, project, projectConfig, token, thresholds, kargoUrl, warn }) {
+// Builds one project's row from its snapshot (see collector.js). Pure and never throws.
+// A project-level snapshot error becomes an error row; a warehouse-level problem stays in its lane.
+export function buildRow(project, projectConfig, snapshot, ctx) {
+  const { thresholds, kargoUrl, warn } = ctx;
+  if (!snapshot || snapshot.error) {
+    return errorRow(project, projectConfig, snapshot ? snapshot.error : 'no data for project', kargoUrl);
+  }
+  let selected;
   try {
-    const available = await client.listWarehouses(project, token);
-    const selected = selectWarehouses(available, projectConfig.warehouses);
-    const stages = await client.listStages(project, token);
-    const lanes = await Promise.all(selected.map(async ({ name, warehouse }) => {
-      if (!warehouse) return laneError(name, `warehouse ${name} not found in project`);
-      try {
-        const freight = await client.listFreight(project, name, token);
-        return buildLane({ project, projectConfig, warehouse, stages, freight, thresholds, kargoUrl, warn });
-      } catch (err) {
-        return laneError(name, err.message);
-      }
-    }));
-    return assembleRow({ project, projectConfig, kargoUrl, lanes });
+    selected = selectWarehouses(snapshot.warehouses, projectConfig.warehouses);
   } catch (err) {
     return errorRow(project, projectConfig, err.message, kargoUrl);
   }
+  const lanes = selected.map(({ name, warehouse }) => {
+    if (!warehouse) return laneError(name, `warehouse ${name} not found in project`);
+    const fetched = snapshot.freightByWarehouse.get(name);
+    if (!fetched) return laneError(name, `no data for warehouse ${name}`);
+    if (fetched.error) return laneError(name, fetched.error);
+    return buildLane({
+      project, projectConfig, warehouse, stages: snapshot.stages, freight: fetched.freight, thresholds, kargoUrl, warn,
+    });
+  });
+  return assembleRow({ project, projectConfig, kargoUrl, lanes });
 }
 
-// Projects are fetched concurrently; row order follows config key order.
-export async function summarizeAll({ client, config, env = process.env, warn }) {
-  const rows = await Promise.all(Object.entries(config.projects).map(([project, projectConfig]) =>
-    summarizeProject({
-      client, project, projectConfig, token: env[projectConfig.tokenEnv],
-      thresholds: config.decay.thresholds, kargoUrl: config.kargo?.url, warn,
-    })));
-  return { generatedAt: new Date().toISOString(), rows };
+// One dashboard's payload body: { dashboard: { id, name }, rows }. A project listed in several
+// dashboards is built from the same snapshot each time.
+export function buildDashboard(dashboard, snapshots, ctx) {
+  const rows = Object.entries(dashboard.projects).map(([project, projectConfig]) =>
+    buildRow(project, projectConfig, snapshots.get(project), ctx));
+  return { dashboard: { id: dashboard.id, name: dashboard.name }, rows };
 }

@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { buildLane, selectWarehouses, summarizeProject, summarizeAll, kargoLink, projectLink } from '../src/summarize.js';
+import { buildLane, buildRow, buildDashboard, selectWarehouses, kargoLink, projectLink } from '../src/summarize.js';
+import { createCollector } from '../src/collector.js';
 import { KargoApiError } from '../src/kargo-client.js';
 import { DEFAULT_THRESHOLDS as T } from '../src/config.js';
 import { sortFreight } from '../src/decay.js';
@@ -14,7 +15,7 @@ const fixture = (project, warehouse) => ({
   stages: load(project, 'stages').items,
   freight: Object.values(load(project, 'freight').groups).flatMap((g) => g.items),
 });
-// One lane (one warehouse's pipeline). Row-level assembly is tested through summarizeProject below.
+// One lane (one warehouse's pipeline). Row-level assembly is tested through runProject below.
 const row = (project, warehouse, overrides = {}, cfg = {}) => {
   const f = fixture(project, warehouse);
   return buildLane({ project, projectConfig: { displayName: project, ...cfg }, thresholds: T, ...f, ...overrides });
@@ -121,23 +122,32 @@ function fakeClient(tokensSeen = []) {
   };
 }
 
-test('summarizeAll: one failing project does not fail the others; order and per-project tokens kept', async () => {
+// Runs the real collector against a fake client, then builds one project's row (pure).
+const wantedOf = (pc) => ({ tokenEnv: 'T', all: !(pc.warehouses?.length), names: new Set(pc.warehouses || []) });
+async function runProject(client, name, projectConfig, ctxExtra = {}) {
+  const snapshot = await createCollector({ client }).collectProject(name, wantedOf(projectConfig), 't');
+  return buildRow(name, { displayName: name, ...projectConfig }, snapshot,
+    { thresholds: T, kargoUrl: 'https://kargo.example', ...ctxExtra });
+}
+
+test('collect + buildDashboard: one failing project does not fail the others; order and per-project tokens kept', async () => {
   const seen = [];
   const config = {
-    decay: { thresholds: T },
-    projects: {
-      locked: { displayName: 'locked', tokenEnv: 'T_LOCKED' },
+    kargo: { url: 'https://kargo.example' }, decay: { thresholds: T },
+    dashboards: { d: { id: 'd', name: 'D', projects: {
+      locked: { displayName: 'locked', warehouses: [], tokenEnv: 'T_LOCKED' },
       'demo-rollouts': { displayName: 'Rollouts', warehouses: ['demo-rollouts'], tokenEnv: 'T_MAIN' },
       'sedemo-app-demo': { displayName: 'App', warehouses: ['sedemo-app-demo'], tokenEnv: 'T_MAIN' },
-    },
+    } } },
   };
-  const out = await summarizeAll({ client: fakeClient(seen), config, env: { T_LOCKED: 'a', T_MAIN: 'b' } });
+  const { snapshots } = await createCollector({ client: fakeClient(seen) }).collect(config, { T_LOCKED: 'a', T_MAIN: 'b' });
+  const out = buildDashboard(config.dashboards.d, snapshots, { thresholds: T, kargoUrl: config.kargo.url });
+  assert.deepEqual(out.dashboard, { id: 'd', name: 'D' });
   assert.deepEqual(out.rows.map((r) => r.project), ['locked', 'demo-rollouts', 'sedemo-app-demo']);
   assert.match(out.rows[0].error, /token lacks access to project locked/);
   assert.equal(out.rows[1].error, null);
   assert.equal(out.rows[2].error, null);
   assert.deepEqual(seen.sort(), [['demo-rollouts', 'b'], ['locked', 'a'], ['sedemo-app-demo', 'b']]);
-  assert.ok(Date.parse(out.generatedAt));
 });
 
 test('kargoLink follows the Kargo URL patterns and encodes segments', () => {
@@ -155,13 +165,9 @@ test('projectLink follows the Kargo project URL pattern', () => {
 
 test('every row, including error rows, links its project name', async () => {
   const kargoUrl = 'https://kargo.example';
-  const good = await summarizeProject({
-    client: fakeClient(), project: 'demo-rollouts', projectConfig: { displayName: 'R', warehouses: [] }, token: 't', thresholds: T, kargoUrl,
-  });
+  const good = await runProject(fakeClient(), 'demo-rollouts', { displayName: 'R', warehouses: [] });
   assert.equal(good.projectUrl, `${kargoUrl}/project/demo-rollouts`);
-  const bad = await summarizeProject({
-    client: fakeClient(), project: 'locked', projectConfig: { displayName: 'L' }, token: 't', thresholds: T, kargoUrl,
-  });
+  const bad = await runProject(fakeClient(), 'locked', { displayName: 'L', warehouses: [] });
   assert.ok(bad.error);
   assert.equal(bad.projectUrl, `${kargoUrl}/project/locked`);
 });
@@ -180,18 +186,15 @@ test('rows link the latest version to its freight and each cell to its stage and
   assert.equal(prod.freightUrl, undefined, 'nothing deployed, so no freight to link');
 });
 
-test('summarizeAll passes the configured Kargo URL through', async () => {
-  const config = {
-    kargo: { url: 'https://kargo.example/' }, decay: { thresholds: T },
-    projects: { 'demo-rollouts': { displayName: 'R', warehouses: ['demo-rollouts'], tokenEnv: 'T' } },
-  };
-  const out = await summarizeAll({ client: fakeClient(), config, env: { T: 'x' } });
+test('buildDashboard passes the configured Kargo URL through to links', async () => {
+  const config = { dashboards: { d: { id: 'd', name: 'D', projects: { 'demo-rollouts': { displayName: 'R', warehouses: ['demo-rollouts'], tokenEnv: 'T' } } } } };
+  const { snapshots } = await createCollector({ client: fakeClient() }).collect(config, { T: 'x' });
+  const out = buildDashboard(config.dashboards.d, snapshots, { thresholds: T, kargoUrl: 'https://kargo.example/' });
   assert.match(out.rows[0].lanes[0].stages[0].stageUrl, /^https:\/\/kargo\.example\/project\/demo-rollouts\/stage\/dev$/);
 });
 
 // ---- Section 13: lanes ----
-const project = (name, projectConfig, client = fakeClient()) =>
-  summarizeProject({ client, project: name, projectConfig: { displayName: name, ...projectConfig }, token: 't', thresholds: T, kargoUrl: 'https://kargo.example' });
+const project = (name, projectConfig, client = fakeClient()) => runProject(client, name, projectConfig);
 const laneSummary = (l) => [l.warehouse, l.latest?.version, l.stages.map((c) => c.name), l.error];
 
 test('team-ada: two lanes under one project, each with its own (disjoint) pipeline', async () => {
