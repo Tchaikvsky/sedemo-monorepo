@@ -112,3 +112,102 @@ test('a project-level failure becomes an error row in every dashboard that lists
   assert.match(b.rows[0].error, /token lacks access/);
   assert.equal(b.rows[0].displayName, 'Ada');
 });
+
+// ---- Section 14.5: promotion step cache ----
+const stagesWithPromotion = (project, stageName, ref) => {
+  const items = structuredClone(load(project, 'stages').items);
+  items.find((s) => s.metadata.name === stageName).status.currentPromotion = ref;
+  return items;
+};
+const promoClient = ({ stages, promotion, getPromotion }) => {
+  const c = loggingClient({ async listStages(p, t) { c.calls.push(['stages', p, t]); return stages(); } });
+  c.getPromotion = getPromotion || (async (p, name, t) => { c.calls.push(['promotion', p, name, t]); return promotion(name); });
+  return c;
+};
+const fakePromotion = (name, extra = {}) => ({
+  metadata: { name }, spec: { steps: [{ uses: 'git-clone', as: 'a' }, { uses: 'helm-template', as: 'b' }, { uses: 'wait-for-approval', as: 'c' }] },
+  status: { phase: 'Running', currentStep: 1 }, ...extra,
+});
+const runningRef = (name = 'dev.p1', status = { phase: 'Running', currentStep: 1 }) =>
+  ({ name, freight: { name: 'f', origin: { name: 'demo-rollouts' } }, ...(status ? { status } : {}) });
+
+test('steps are fetched once per Promotion across refreshes; progress comes from the stage reference', async () => {
+  let step = 1;
+  const client = promoClient({
+    stages: () => stagesWithPromotion('demo-rollouts', 'dev', runningRef('dev.p1', { phase: 'Running', currentStep: step })),
+    promotion: (n) => fakePromotion(n),
+  });
+  const collector = createCollector({ client });
+  const config = cfg({ a: { 'demo-rollouts': pc() } });
+  const r1 = await collector.collect(config, { T: 't' });
+  step = 2;
+  const r2 = await collector.collect(config, { T: 't' });
+  assert.equal(count(client.calls, 'promotion'), 1, 'fetched once, then cached');
+  assert.equal(r1.active, true);
+  const info1 = r1.snapshots.get('demo-rollouts').promotions.get('dev');
+  const info2 = r2.snapshots.get('demo-rollouts').promotions.get('dev');
+  assert.deepEqual(info1.steps.map((s) => s.uses), ['git-clone', 'helm-template', 'wait-for-approval']);
+  assert.deepEqual([info1.status.currentStep, info2.status.currentStep], [1, 2], 'live progress is re-read every refresh');
+  assert.ok(client.calls.filter((c) => c[0] === 'promotion').every((c) => c[3] === 't'), 'uses the project token');
+});
+
+test('a reference with no status makes the collector read the Promotion for its status every refresh', async () => {
+  const client = promoClient({
+    stages: () => stagesWithPromotion('demo-rollouts', 'dev', runningRef('dev.p1', null)),
+    promotion: (n) => fakePromotion(n, { status: { phase: 'Running', currentStep: 2 } }),
+  });
+  const collector = createCollector({ client });
+  const config = cfg({ a: { 'demo-rollouts': pc() } });
+  await collector.collect(config, { T: 't' });
+  const r = await collector.collect(config, { T: 't' });
+  assert.equal(count(client.calls, 'promotion'), 2);
+  assert.equal(r.snapshots.get('demo-rollouts').promotions.get('dev').status.currentStep, 2);
+});
+
+test('a failed Promotion fetch is isolated to that card and retried next refresh; warnings carry no token', async () => {
+  const warnings = [];
+  let fail = true;
+  const client = promoClient({
+    stages: () => stagesWithPromotion('demo-rollouts', 'dev', runningRef()),
+    getPromotion: async (p, name, t) => { if (fail) throw new KargoApiError('token lacks access to project demo-rollouts', 403); return fakePromotion(name); },
+  });
+  const collector = createCollector({ client, warn: (m) => warnings.push(m) });
+  const config = cfg({ a: { 'demo-rollouts': pc() } });
+  const r1 = await collector.collect(config, { T: 'SECRET' });
+  const snap = r1.snapshots.get('demo-rollouts');
+  assert.equal(snap.error, null, 'the project still renders');
+  assert.equal(snap.promotions.get('dev').steps, null);
+  assert.equal(r1.active, true);
+  assert.ok(warnings.length === 1 && !warnings[0].includes('SECRET'));
+  fail = false;
+  const r2 = await collector.collect(config, { T: 'SECRET' });
+  assert.equal(r2.snapshots.get('demo-rollouts').promotions.get('dev').steps.length, 3);
+});
+
+test('cache entries are dropped once a Promotion is no longer current, and idle projects report not active', async () => {
+  let current = runningRef('dev.p1');
+  const client = promoClient({
+    stages: () => (current ? stagesWithPromotion('demo-rollouts', 'dev', current) : load('demo-rollouts', 'stages').items),
+    promotion: (n) => fakePromotion(n),
+  });
+  const collector = createCollector({ client });
+  const config = cfg({ a: { 'demo-rollouts': pc() } });
+  await collector.collect(config, { T: 't' });
+  current = null;
+  const idle = await collector.collect(config, { T: 't' });
+  assert.equal(idle.active, false);
+  assert.equal(idle.snapshots.get('demo-rollouts').promotions.size, 0);
+  current = runningRef('dev.p1');
+  await collector.collect(config, { T: 't' });
+  assert.equal(count(client.calls, 'promotion'), 2, 'evicted, so a returning Promotion name is fetched again');
+});
+
+test('terminal references and stages without a promotion are ignored (no extra calls)', async () => {
+  const client = promoClient({
+    stages: () => stagesWithPromotion('demo-rollouts', 'dev', runningRef('dev.old', { phase: 'Succeeded', currentStep: 9 })),
+    promotion: (n) => fakePromotion(n),
+  });
+  const r = await createCollector({ client }).collect(cfg({ a: { 'demo-rollouts': pc() } }), { T: 't' });
+  assert.equal(count(client.calls, 'promotion'), 0);
+  assert.equal(r.active, false);
+});

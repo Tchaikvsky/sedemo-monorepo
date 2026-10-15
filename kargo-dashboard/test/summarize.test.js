@@ -282,3 +282,52 @@ test('every lane carries its own links', async () => {
     for (const c of l.stages) assert.equal(c.stageUrl, `https://kargo.example/project/team-ada/stage/${c.name}`);
   }
 });
+
+// ---- Section 14: promotion state on cells ----
+const PROMO_CFG = { color: '#1e6fd9', waitingColor: '#7b1fa2', waitingStepPattern: 'wait-for|^get-user-input$', animate: true, activeRefreshIntervalSeconds: 5 };
+const promoInfo = (originName, currentStep = 1) => ({
+  name: 'dev.p1',
+  ref: { name: 'dev.p1', freight: { name: 'f1', origin: { kind: 'Warehouse', name: originName }, images: [{ repoURL: 'ghcr.io/akuity/sedemo-monorepo-rollouts-app', tag: '51-blue' }] }, status: { phase: 'Running' } },
+  status: { phase: 'Running', currentStep },
+  steps: [{ uses: 'git-clone', as: 'a' }, { uses: 'helm-template', as: 'b' }, { uses: 'wait-for-approval', as: 'c' }],
+});
+
+test('a running promotion appears on that stage\'s card with its step summary and target version', () => {
+  const r = row('demo-rollouts', 'demo-rollouts', { promotions: new Map([['dev', promoInfo('demo-rollouts', 1)]]), promotion: PROMO_CFG, kargoUrl: 'https://kargo.example' });
+  const dev = r.stages.find((c) => c.name === 'dev');
+  assert.deepEqual([dev.promotion.step, dev.promotion.steps, dev.promotion.uses, dev.promotion.waiting], [2, 3, 'helm-template', false]);
+  assert.equal(dev.promotion.targetVersion, '51-blue');
+  assert.equal(dev.promotion.targetFreightUrl, 'https://kargo.example/project/demo-rollouts/freight/f1');
+  assert.equal(dev.version, '50-blue', 'the deployed version is still the current one');
+  assert.equal(r.stages.find((c) => c.name === 'staging').promotion, null, 'other stages are unaffected');
+  const waiting = row('demo-rollouts', 'demo-rollouts', { promotions: new Map([['dev', promoInfo('demo-rollouts', 2)]]), promotion: PROMO_CFG });
+  assert.equal(waiting.stages.find((c) => c.name === 'dev').promotion.waiting, true);
+});
+
+test('a promotion only shows in the lane of the warehouse whose Freight it promotes', () => {
+  const promotions = new Map([['dev', promoInfo('sedemo-app-demo-chart', 0)]]);
+  const img = row('sedemo-app-demo', 'sedemo-app-demo', { promotions, promotion: PROMO_CFG });
+  const chart = row('sedemo-app-demo', 'sedemo-app-demo-chart', { promotions, promotion: PROMO_CFG });
+  assert.equal(img.stages.find((c) => c.name === 'dev').promotion, null);
+  assert.equal(chart.stages.find((c) => c.name === 'dev').promotion.step, 1);
+});
+
+test('without promotion settings or data every card has promotion: null', () => {
+  assert.ok(row('demo-rollouts', 'demo-rollouts').stages.every((c) => c.promotion === null));
+  assert.ok(row('demo-rollouts', 'demo-rollouts', { promotions: new Map(), promotion: PROMO_CFG }).stages.every((c) => c.promotion === null));
+});
+
+test('end to end: collector snapshot -> buildDashboard puts the promotion on the card', async () => {
+  const stages = structuredClone(load('demo-rollouts', 'stages').items);
+  stages.find((s) => s.metadata.name === 'staging').status.currentPromotion = {
+    name: 'staging.p9', freight: { name: 'f9', origin: { name: 'demo-rollouts' }, images: [{ repoURL: 'ghcr.io/akuity/sedemo-monorepo-rollouts-app', tag: '51-blue' }] },
+  };
+  const client = { ...fakeClient(), async listStages() { return stages; },
+    async getPromotion() { return { spec: { steps: [{ uses: 'git-clone' }, { uses: 'get-user-input' }] }, status: { phase: 'Running', currentStep: 1 } }; } };
+  const config = { dashboards: { d: { id: 'd', name: 'D', projects: { 'demo-rollouts': { displayName: 'R', warehouses: ['demo-rollouts'], tokenEnv: 'T' } } } } };
+  const { snapshots, active } = await createCollector({ client }).collect(config, { T: 'x' });
+  const out = buildDashboard(config.dashboards.d, snapshots, { thresholds: T, kargoUrl: 'https://k', promotion: PROMO_CFG });
+  const card = out.rows[0].lanes[0].stages.find((c) => c.name === 'staging');
+  assert.equal(active, true);
+  assert.deepEqual([card.promotion.step, card.promotion.steps, card.promotion.uses, card.promotion.waiting], [2, 2, 'get-user-input', true]);
+});
