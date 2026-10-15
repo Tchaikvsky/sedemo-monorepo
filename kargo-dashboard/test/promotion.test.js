@@ -32,6 +32,7 @@ test('mid-run: "5 of 22: helm-template" (currentStep is 0-based), not waiting', 
   assert.deepEqual([p.step, p.steps, p.uses, p.alias, p.waiting, p.phase], [5, 22, 'helm-template', 'step-4', false, 'Running'].map((x, i) => (i === 3 ? realSteps[4].as : x)));
   assert.equal(p.name, 'prod.01abc');
   assert.equal(p.startedAt, '2026-10-15T10:00:00Z');
+  assert.equal(p.promotionUrl, 'https://kargo.example/project/demo-snow/promotion/prod.01abc');
 });
 
 test('on snow-wait-for-condition (the last step): waiting with the default pattern', () => {
@@ -95,4 +96,10 @@ test('the current step\'s message is surfaced for the tooltip', () => {
   const status = { stepExecutionMetadata: realSteps.map((s, i) => ({ alias: s.as, message: i === 21 ? 'waiting on ticket' : undefined })) };
   assert.equal(promotionState(info({ currentStep: 21, status }), ctx()).message, 'waiting on ticket');
   assert.equal(promotionState(info({ currentStep: 4, status }), ctx()).message, null);
+});
+
+test('promotion link follows Kargo\'s /project/<project>/promotion/<name> route and encodes the name', () => {
+  const p = promotionState({ ...info({ currentStep: 0 }), name: 'staging.01m4zy8x/odd name' }, ctx());
+  assert.equal(p.promotionUrl, 'https://kargo.example/project/demo-snow/promotion/staging.01m4zy8x%2Fodd%20name');
+  assert.equal(promotionState(info({ currentStep: 0 }), { ...ctx(), kargoUrl: undefined }).promotionUrl, undefined);
 });

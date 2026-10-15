@@ -51,5 +51,7 @@ export function promotionState(info, ctx) {
     targetFreightName: freight?.name ?? null,
     targetFreightUrl: kargoLink(kargoUrl, project, 'freight', freight?.name),
     startedAt: status.startedAt ?? null,
+    // Kargo's promotion page (/project/<project>/promotion/<name>); it is where approval and input prompts are answered.
+    promotionUrl: kargoLink(kargoUrl, project, 'promotion', info.name),
   };
 }

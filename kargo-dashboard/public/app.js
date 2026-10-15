@@ -106,7 +106,7 @@ function renderPromotingCell(s) {
   if (p.targetVersion && p.targetVersion !== s.version) {
     version.append(el('span', 'arrow', ' → '), linkOrText('span', '', p.targetVersion, p.targetFreightUrl));
   }
-  c.append(linkOrText('span', 'stage', s.name, s.stageUrl), version, el('span', 'status', promotionLabel(p)));
+  c.append(linkOrText('span', 'stage', s.name, s.stageUrl), version, linkOrText('span', 'status', promotionLabel(p), p.promotionUrl));
   c.title = tooltip(s);
   return c;
 }
