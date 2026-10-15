@@ -19,22 +19,29 @@ config:
     url: https://kargo.akpdemoapps.link
     tokenEnv: KARGO_TOKEN
   refreshIntervalSeconds: 30
-  projects:
-    demo-rollouts:
-      displayName: Rollouts Demo
-      warehouse: demo-rollouts
-    sedemo-app-demo:
-      warehouse: sedemo-app-demo
-    sedemo-app-oct: 
-      warehouse: sedemo-app-oct
-    team-ada: 
-      warehouses: 
-        - akkoma-main
-        - akkoma-release
-    team-daniel: 
-      warehouse: features
-    team-eddie: {}
-    team-emily: {}
-    team-namho: {}
-    gatekeeper-stage: {}
-    demo-snow: {}
+  defaultDashboard: shared
+  dashboards:
+    shared:
+      name: Shared
+      projects:
+        team-ada: 
+          warehouses: 
+            - akkoma-main
+            - akkoma-release
+        team-daniel: 
+          warehouse: features
+        team-eddie: {}
+        team-emily: {}
+        team-namho: {}
+    eddies:
+      name: Eddie's Dashboard
+      projects:
+        demo-rollouts:
+          displayName: Rollouts Demo
+          warehouse: demo-rollouts
+        sedemo-app-demo:
+          warehouse: sedemo-app-demo
+        sedemo-app-oct: 
+          warehouse: sedemo-app-oct
+        team-eddie: {}
+    
