@@ -28,6 +28,18 @@ body {
 }
 header { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: center; justify-content: space-between; margin-bottom: 16px; }
 h1 { font-size: 20px; margin: 0; }
+.eyebrow { font-size: 12px; letter-spacing: .02em; }
+.picker { position: relative; display: inline-block; }
+.picker::after { content: "▾"; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--muted); }
+.picker select {
+  appearance: none; -webkit-appearance: none; font: inherit; color: inherit; cursor: pointer;
+  background: transparent; border: 1px solid transparent; border-radius: 6px;
+  margin: 0 0 0 -8px; padding: 2px 28px 2px 8px; max-width: 100%;
+  field-sizing: content; /* shrink to the selected name where supported */
+}
+.picker select:hover { background: var(--panel); border-color: var(--border); }
+.picker select:focus-visible { outline: 2px solid var(--latest-fg); outline-offset: 2px; }
+.picker select option { color: var(--fg); background: var(--panel); font-weight: 400; }
 .muted { color: var(--muted); }
 #legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; }
 #legend span { display: inline-flex; align-items: center; gap: 6px; }

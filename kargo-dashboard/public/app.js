@@ -123,23 +123,99 @@ function render(data) {
   updatedEl.textContent = `Updated ${new Date(data.generatedAt).toLocaleTimeString()}`;
 }
 
-async function poll() {
+// ---- Dashboards: the title is the picker; the URL is the state (/ is the default, /d/<id> the rest) ----
+const titleEl = document.getElementById('title');
+let dashboards = [];
+let currentId = null;
+let pollTimer = null;
+let pollToken = 0; // bumped on every dashboard switch so a late response can't overwrite the new view
+
+const defaultDashboard = () => dashboards.find((d) => d.default) || dashboards[0];
+const pathFor = (d) => (d.default ? '/' : `/d/${encodeURIComponent(d.id)}`);
+
+function idFromLocation() {
+  const m = /^\/d\/([^/]+)\/?$/.exec(location.pathname);
+  return m ? decodeURIComponent(m[1]) : defaultDashboard().id;
+}
+
+// Built once, so keyboard focus survives switching; afterwards only its value and the page title change.
+function buildTitle() {
+  const current = dashboards.find((d) => d.id === currentId) || defaultDashboard();
+  if (dashboards.length < 2) {
+    titleEl.textContent = current.name; // a single dashboard looks like a plain heading
+    return;
+  }
+  const picker = el('span', 'picker');
+  const select = el('select');
+  select.id = 'dashboard-select';
+  select.setAttribute('aria-label', 'Dashboard');
+  for (const d of dashboards) {
+    const o = el('option', '', d.default ? `${d.name} (default)` : d.name);
+    o.value = d.id;
+    select.append(o);
+  }
+  select.addEventListener('change', () => {
+    const next = dashboards.find((d) => d.id === select.value);
+    history.pushState({}, '', pathFor(next));
+    showDashboard(next.id);
+  });
+  picker.append(select);
+  titleEl.replaceChildren(picker);
+}
+
+function syncTitle() {
+  const current = dashboards.find((d) => d.id === currentId) || defaultDashboard();
+  document.title = `${current.name} · Kargo Dashboard`;
+  const select = document.getElementById('dashboard-select');
+  if (select) select.value = current.id;
+}
+
+function showDashboard(id) {
+  currentId = id;
+  syncTitle();
+  rowsEl.replaceChildren(el('p', 'muted', 'Loading…'));
+  bannerEl.hidden = true;
+  updatedEl.textContent = '';
+  clearTimeout(pollTimer);
+  pollToken += 1;
+  poll(pollToken);
+}
+
+async function poll(token) {
   let delay = 3;
   try {
-    const res = await fetch('api/summary');
+    const res = await fetch(`/api/summary?dashboard=${encodeURIComponent(currentId)}`);
+    if (token !== pollToken) return; // superseded by a dashboard switch
     if (res.ok) {
       const data = await res.json();
+      if (token !== pollToken) return;
       render(data);
       delay = data.refreshIntervalSeconds;
     } else if (res.status !== 503) {
       throw new Error(`HTTP ${res.status}`);
     }
   } catch (err) {
+    if (token !== pollToken) return;
     bannerEl.hidden = false;
     bannerEl.textContent = `Cannot reach the dashboard server: ${err.message}`;
     delay = 10;
   }
-  setTimeout(poll, delay * 1000);
+  pollTimer = setTimeout(() => poll(token), delay * 1000);
 }
 
-poll();
+async function start() {
+  try {
+    dashboards = await (await fetch('/api/dashboards')).json();
+  } catch (err) {
+    bannerEl.hidden = false;
+    bannerEl.textContent = `Cannot reach the dashboard server: ${err.message}`;
+    setTimeout(start, 10000);
+    return;
+  }
+  currentId = idFromLocation();
+  buildTitle();
+  window.addEventListener('popstate', () => showDashboard(idFromLocation()));
+  showDashboard(currentId);
+}
+
+start();
