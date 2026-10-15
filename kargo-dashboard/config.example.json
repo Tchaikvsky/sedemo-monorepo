@@ -4,22 +4,60 @@
     "tokenEnv": "KARGO_TOKEN"
   },
   "refreshIntervalSeconds": 30,
+  "defaultDashboard": "demos",
   "decay": {
     "thresholds": [
-      { "max": 0, "label": "Good", "color": "#2e7d32" },
-      { "max": 1, "label": "OK", "color": "#fdd835" },
-      { "max": 3, "label": "Bad", "color": "#fb8c00" },
-      { "max": null, "label": "Worse", "color": "#c62828" }
+      {
+        "max": 0,
+        "label": "Good",
+        "color": "#2e7d32"
+      },
+      {
+        "max": 1,
+        "label": "OK",
+        "color": "#fdd835"
+      },
+      {
+        "max": 3,
+        "label": "Bad",
+        "color": "#fb8c00"
+      },
+      {
+        "max": null,
+        "label": "Worse",
+        "color": "#c62828"
+      }
     ]
   },
-  "projects": {
-    "demo-rollouts": {
-      "displayName": "Rollouts Demo",
-      "warehouse": "demo-rollouts"
+  "promotion": {
+    "color": "#1e6fd9",
+    "waitingColor": "#7b1fa2",
+    "waitingStepPattern": "wait-for|^get-user-input$",
+    "animate": true,
+    "activeRefreshIntervalSeconds": 5
+  },
+  "dashboards": {
+    "demos": {
+      "name": "SE Demos",
+      "projects": {
+        "demo-rollouts": {
+          "displayName": "Rollouts Demo",
+          "warehouse": "demo-rollouts"
+        },
+        "demo-snow": {}
+      }
     },
-    "sedemo-app-demo": {
-      "warehouses": ["sedemo-app-demo", "sedemo-app-demo-chart"]
-    },
-    "team-ada": {}
+    "teams": {
+      "name": "Team Apps",
+      "projects": {
+        "sedemo-app-demo": {
+          "warehouses": [
+            "sedemo-app-demo",
+            "sedemo-app-demo-chart"
+          ]
+        },
+        "team-ada": {}
+      }
+    }
   }
 }

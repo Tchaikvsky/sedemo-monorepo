@@ -24,6 +24,9 @@ function el(tag, className, text) {
   return e;
 }
 
+// Set from each payload (config.promotion); the defaults only matter before the first response.
+let promoStyle = { color: '#1e6fd9', waitingColor: '#7b1fa2', animate: true };
+
 function renderLegend(thresholds) {
   legendEl.replaceChildren();
   let prev = 0;
@@ -36,14 +39,38 @@ function renderLegend(thresholds) {
     legendEl.append(item);
     if (t.max !== null) prev = t.max + 1;
   }
+  // The round swatch stands in for the card's ● marker; the waiting card keeps its ⏸ marker.
+  for (const [color, text, round] of [[promoStyle.color, 'Promoting', true], [promoStyle.waitingColor, '⏸ Waiting for input', false]]) {
+    const item = el('span', 'promo-key');
+    const swatch = el('i');
+    if (round) swatch.style.borderRadius = '50%';
+    swatch.style.background = color;
+    item.append(swatch, document.createTextNode(text));
+    legendEl.append(item);
+  }
+}
+
+function promotionLabel(p) {
+  if (!p.steps || !p.uses) return '● Promoting…';
+  const where = `${p.step} of ${p.steps}: ${p.uses}`;
+  return p.waiting ? `⏸ Waiting for input · ${where}` : `● ${where}`;
 }
 
 function tooltip(cell) {
   const lines = [];
+  const p = cell.promotion;
+  if (p) {
+    lines.push(p.waiting ? 'Promotion is waiting for someone to act' : 'Promotion in progress');
+    lines.push(`Promotion: ${p.name}`);
+    if (p.alias) lines.push(`Step: ${p.alias}`);
+    if (p.message) lines.push(`Message: ${p.message}`);
+    if (p.startedAt) lines.push(`Started: ${new Date(p.startedAt).toLocaleString()}`);
+    lines.push('');
+  }
   if (cell.alias) lines.push(`Alias: ${cell.alias}`);
   if (cell.freightName) lines.push(`Freight: ${cell.freightName}`);
   if (cell.decay.behind !== null && cell.decay.behind !== undefined) {
-    lines.push(`${cell.decay.behind} version${cell.decay.behind === 1 ? '' : 's'} behind latest`);
+    lines.push(`${cell.decay.label}: ${cell.decay.behind} version${cell.decay.behind === 1 ? '' : 's'} behind latest`);
   }
   if (cell.since) lines.push(`Deployed since: ${new Date(cell.since).toLocaleString()}`);
   if (cell.createdAt) lines.push(`Created: ${new Date(cell.createdAt).toLocaleString()}`);
@@ -65,7 +92,27 @@ function linkOrText(tag, className, text, href) {
   return e;
 }
 
+// While a promotion runs the card takes the promotion color (blue, or purple when the current step
+// waits for a person), pulses, and shows "current → target" with the step summary.
+function renderPromotingCell(s) {
+  const p = s.promotion;
+  const color = p.waiting ? promoStyle.waitingColor : promoStyle.color;
+  const c = el('div', `cell promoting${p.waiting ? ' waiting' : ''}`);
+  c.style.background = color;
+  c.style.color = textColor(color);
+  c.style.setProperty('--glow', `${color}99`);
+  const version = el('span', 'version');
+  version.append(linkOrText('span', '', s.version ?? '—', s.freightUrl));
+  if (p.targetVersion && p.targetVersion !== s.version) {
+    version.append(el('span', 'arrow', ' → '), linkOrText('span', '', p.targetVersion, p.targetFreightUrl));
+  }
+  c.append(linkOrText('span', 'stage', s.name, s.stageUrl), version, el('span', 'status', promotionLabel(p)));
+  c.title = tooltip(s);
+  return c;
+}
+
 function renderCell(s) {
+  if (s.promotion) return renderPromotingCell(s);
   const color = s.decay.color || NEUTRAL;
   const c = el('div', 'cell');
   c.style.background = color;
@@ -116,6 +163,8 @@ function renderRow(row) {
 }
 
 function render(data) {
+  promoStyle = data.promotionStyle || promoStyle;
+  document.body.classList.toggle('no-motion', promoStyle.animate === false);
   renderLegend(data.thresholds);
   rowsEl.replaceChildren(...data.rows.map(renderRow));
   bannerEl.hidden = !data.refreshError;
@@ -123,23 +172,102 @@ function render(data) {
   updatedEl.textContent = `Updated ${new Date(data.generatedAt).toLocaleTimeString()}`;
 }
 
-async function poll() {
+// ---- Dashboards: the title is the picker; the URL is the state (/ is the default, /d/<id> the rest) ----
+const titleEl = document.getElementById('title');
+let dashboards = [];
+let currentId = null;
+let pollTimer = null;
+let pollToken = 0; // bumped on every dashboard switch so a late response can't overwrite the new view
+
+const defaultDashboard = () => dashboards.find((d) => d.default) || dashboards[0];
+const pathFor = (d) => (d.default ? '/' : `/d/${encodeURIComponent(d.id)}`);
+
+function idFromLocation() {
+  const m = /^\/d\/([^/]+)\/?$/.exec(location.pathname);
+  return m ? decodeURIComponent(m[1]) : defaultDashboard().id;
+}
+
+// Built once, so keyboard focus survives switching; afterwards only its value and the page title change.
+function buildTitle() {
+  const current = dashboards.find((d) => d.id === currentId) || defaultDashboard();
+  if (dashboards.length < 2) {
+    titleEl.textContent = current.name; // a single dashboard looks like a plain heading
+    return;
+  }
+  const picker = el('span', 'picker');
+  const select = el('select');
+  select.id = 'dashboard-select';
+  select.setAttribute('aria-label', 'Dashboard');
+  for (const d of dashboards) {
+    const o = el('option', '', d.default ? `${d.name} (default)` : d.name);
+    o.value = d.id;
+    select.append(o);
+  }
+  // Browsers size a select from its options at normal weight, which clips the bold heading text.
+  const longest = Math.max(...dashboards.map((d) => (d.default ? `${d.name} (default)` : d.name).length));
+  select.style.minWidth = `calc(${longest * 1.15}ch + 40px)`;
+  select.addEventListener('change', () => {
+    const next = dashboards.find((d) => d.id === select.value);
+    history.pushState({}, '', pathFor(next));
+    showDashboard(next.id);
+  });
+  picker.append(select);
+  titleEl.replaceChildren(picker);
+}
+
+function syncTitle() {
+  const current = dashboards.find((d) => d.id === currentId) || defaultDashboard();
+  document.title = `${current.name} · Kargo Dashboard`;
+  const select = document.getElementById('dashboard-select');
+  if (select) select.value = current.id;
+}
+
+function showDashboard(id) {
+  currentId = id;
+  syncTitle();
+  rowsEl.replaceChildren(el('p', 'muted', 'Loading…'));
+  bannerEl.hidden = true;
+  updatedEl.textContent = '';
+  clearTimeout(pollTimer);
+  pollToken += 1;
+  poll(pollToken);
+}
+
+async function poll(token) {
   let delay = 3;
   try {
-    const res = await fetch('api/summary');
+    const res = await fetch(`/api/summary?dashboard=${encodeURIComponent(currentId)}`);
+    if (token !== pollToken) return; // superseded by a dashboard switch
     if (res.ok) {
       const data = await res.json();
+      if (token !== pollToken) return;
       render(data);
       delay = data.refreshIntervalSeconds;
     } else if (res.status !== 503) {
       throw new Error(`HTTP ${res.status}`);
     }
   } catch (err) {
+    if (token !== pollToken) return;
     bannerEl.hidden = false;
     bannerEl.textContent = `Cannot reach the dashboard server: ${err.message}`;
     delay = 10;
   }
-  setTimeout(poll, delay * 1000);
+  pollTimer = setTimeout(() => poll(token), delay * 1000);
 }
 
-poll();
+async function start() {
+  try {
+    dashboards = await (await fetch('/api/dashboards')).json();
+  } catch (err) {
+    bannerEl.hidden = false;
+    bannerEl.textContent = `Cannot reach the dashboard server: ${err.message}`;
+    setTimeout(start, 10000);
+    return;
+  }
+  currentId = idFromLocation();
+  buildTitle();
+  window.addEventListener('popstate', () => showDashboard(idFromLocation()));
+  showDashboard(currentId);
+}
+
+start();

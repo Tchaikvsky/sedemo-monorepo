@@ -43,6 +43,11 @@ export function createKargoClient({ url, fetchImpl = fetch, timeoutMs = TIMEOUT_
       return body.items || [];
     },
 
+    // One Promotion, for its (already expanded) steps and live status.
+    async getPromotion(project, name, token) {
+      return get(`${projectPath(project)}/promotions/${encodeURIComponent(name)}`, token, project);
+    },
+
     // All of the project's stages; callers pick the ones that request a given warehouse.
     async listStages(project, token) {
       const body = await get(`${projectPath(project)}/stages`, token, project);

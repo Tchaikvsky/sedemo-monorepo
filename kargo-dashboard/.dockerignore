@@ -3,3 +3,4 @@ test
 config.json
 *.md
 .gitignore
+e2e

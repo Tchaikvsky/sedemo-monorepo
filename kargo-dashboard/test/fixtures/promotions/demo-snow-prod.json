@@ -1,0 +1,253 @@
+{
+  "metadata": {
+    "name": "scrubbed-promotion",
+    "creationTimestamp": "2026-10-08T12:36:18Z"
+  },
+  "spec": {
+    "stage": "prod",
+    "freight": "527bdf02c67a173d5b75dd9a57333bab78ccae03",
+    "origin": null,
+    "steps": [
+      {
+        "uses": "git-clone",
+        "as": "task-1::step-1"
+      },
+      {
+        "uses": "git-clone",
+        "as": "task-1::step-2"
+      },
+      {
+        "uses": "git-clear",
+        "as": "task-1::step-3"
+      },
+      {
+        "uses": "helm-template",
+        "as": "step-2"
+      },
+      {
+        "uses": "helm-template",
+        "as": "step-3"
+      },
+      {
+        "uses": "helm-template",
+        "as": "step-4"
+      },
+      {
+        "uses": "copy",
+        "as": "step-5"
+      },
+      {
+        "uses": "copy",
+        "as": "step-6"
+      },
+      {
+        "uses": "copy",
+        "as": "step-7"
+      },
+      {
+        "uses": "git-commit",
+        "as": "push-manifests::commit"
+      },
+      {
+        "uses": "git-push",
+        "as": "push-manifests::push"
+      },
+      {
+        "uses": "git-push",
+        "as": "push-manifests::pr-push"
+      },
+      {
+        "uses": "compose-output",
+        "as": "push-manifests::output"
+      },
+      {
+        "uses": "git-open-pr",
+        "as": "push-manifests::open-pr"
+      },
+      {
+        "uses": "send-message",
+        "as": "push-manifests::step-6"
+      },
+      {
+        "uses": "git-wait-for-pr",
+        "as": "push-manifests::wait-for-pr"
+      },
+      {
+        "uses": "snow-create",
+        "as": "snowcreate"
+      },
+      {
+        "uses": "snow-create",
+        "as": "create-snow-task-amer-east"
+      },
+      {
+        "uses": "snow-create",
+        "as": "create-snow-task-amer-west"
+      },
+      {
+        "uses": "snow-create",
+        "as": "create-snow-task-emea"
+      },
+      {
+        "uses": "set-metadata",
+        "as": "step-13"
+      },
+      {
+        "uses": "snow-wait-for-condition",
+        "as": "snow-wait-for-condition"
+      }
+    ]
+  },
+  "status": {
+    "phase": "Succeeded",
+    "currentStep": 21,
+    "startedAt": null,
+    "finishedAt": "2026-10-08T12:38:52Z",
+    "freight": {
+      "name": "527bdf02c67a173d5b75dd9a57333bab78ccae03",
+      "origin": {
+        "kind": "Warehouse",
+        "name": "demo-snow"
+      },
+      "images": [
+        {
+          "repoURL": "ghcr.io/akuity/sedemo-monorepo-snow-demo",
+          "tag": "49-green",
+          "digest": "sha256:8c1bdb48d154f7e7facb220ef25347006ea8bb506947278b88f485bd65da7050"
+        }
+      ],
+      "commits": [
+        {
+          "repoURL": "https://github.com/akuity/sedemo-monorepo",
+          "id": "c754283005142f06b9493caebf2c23078087223c"
+        }
+      ]
+    },
+    "stepExecutionMetadata": [
+      {
+        "alias": "task-1::step-1",
+        "status": "Succeeded",
+        "startedAt": "2026-10-08T12:36:19Z",
+        "finishedAt": "2026-10-08T12:36:21Z"
+      },
+      {
+        "alias": "task-1::step-2",
+        "status": "Succeeded",
+        "startedAt": "2026-10-08T12:36:21Z",
+        "finishedAt": "2026-10-08T12:36:24Z"
+      },
+      {
+        "alias": "task-1::step-3",
+        "status": "Succeeded",
+        "startedAt": "2026-10-08T12:36:24Z",
+        "finishedAt": "2026-10-08T12:36:24Z"
+      },
+      {
+        "alias": "step-2",
+        "status": "Succeeded",
+        "startedAt": "2026-10-08T12:36:24Z",
+        "finishedAt": "2026-10-08T12:36:24Z"
+      },
+      {
+        "alias": "step-3",
+        "status": "Succeeded",
+        "startedAt": "2026-10-08T12:36:24Z",
+        "finishedAt": "2026-10-08T12:36:24Z"
+      },
+      {
+        "alias": "step-4",
+        "status": "Succeeded",
+        "startedAt": "2026-10-08T12:36:24Z",
+        "finishedAt": "2026-10-08T12:36:24Z"
+      },
+      {
+        "alias": "step-5",
+        "status": "Succeeded",
+        "startedAt": "2026-10-08T12:36:24Z",
+        "finishedAt": "2026-10-08T12:36:24Z"
+      },
+      {
+        "alias": "step-6",
+        "status": "Succeeded",
+        "startedAt": "2026-10-08T12:36:24Z",
+        "finishedAt": "2026-10-08T12:36:24Z"
+      },
+      {
+        "alias": "step-7",
+        "status": "Succeeded",
+        "startedAt": "2026-10-08T12:36:24Z",
+        "finishedAt": "2026-10-08T12:36:24Z"
+      },
+      {
+        "alias": "push-manifests::commit",
+        "status": "Succeeded",
+        "startedAt": "2026-10-08T12:36:24Z",
+        "finishedAt": "2026-10-08T12:36:25Z"
+      },
+      {
+        "alias": "push-manifests::push",
+        "status": "Succeeded",
+        "startedAt": "2026-10-08T12:36:25Z",
+        "finishedAt": "2026-10-08T12:36:27Z"
+      },
+      {
+        "alias": "push-manifests::pr-push",
+        "status": "Skipped"
+      },
+      {
+        "alias": "push-manifests::output",
+        "status": "Succeeded",
+        "startedAt": "2026-10-08T12:36:28Z",
+        "finishedAt": "2026-10-08T12:36:28Z"
+      },
+      {
+        "alias": "push-manifests::open-pr",
+        "status": "Skipped"
+      },
+      {
+        "alias": "push-manifests::step-6",
+        "status": "Skipped"
+      },
+      {
+        "alias": "push-manifests::wait-for-pr",
+        "status": "Skipped"
+      },
+      {
+        "alias": "snowcreate",
+        "status": "Succeeded",
+        "startedAt": "2026-10-08T12:36:28Z",
+        "finishedAt": "2026-10-08T12:36:32Z"
+      },
+      {
+        "alias": "create-snow-task-amer-east",
+        "status": "Succeeded",
+        "startedAt": "2026-10-08T12:36:32Z",
+        "finishedAt": "2026-10-08T12:36:33Z"
+      },
+      {
+        "alias": "create-snow-task-amer-west",
+        "status": "Succeeded",
+        "startedAt": "2026-10-08T12:36:33Z",
+        "finishedAt": "2026-10-08T12:36:34Z"
+      },
+      {
+        "alias": "create-snow-task-emea",
+        "status": "Succeeded",
+        "startedAt": "2026-10-08T12:36:34Z",
+        "finishedAt": "2026-10-08T12:36:34Z"
+      },
+      {
+        "alias": "step-13",
+        "status": "Succeeded",
+        "startedAt": "2026-10-08T12:36:34Z",
+        "finishedAt": "2026-10-08T12:36:35Z"
+      },
+      {
+        "alias": "snow-wait-for-condition",
+        "status": "Succeeded",
+        "startedAt": "2026-10-08T12:36:35Z",
+        "finishedAt": "2026-10-08T12:38:52Z"
+      }
+    ]
+  }
+}

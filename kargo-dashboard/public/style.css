@@ -28,6 +28,17 @@ body {
 }
 header { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: center; justify-content: space-between; margin-bottom: 16px; }
 h1 { font-size: 20px; margin: 0; }
+.eyebrow { font-size: 12px; letter-spacing: .02em; }
+.picker { position: relative; display: inline-block; }
+.picker::after { content: "▾"; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--muted); }
+.picker select {
+  appearance: none; -webkit-appearance: none; font: inherit; color: inherit; cursor: pointer;
+  background: transparent; border: 1px solid transparent; border-radius: 6px;
+  margin: 0 0 0 -8px; padding: 2px 28px 2px 8px; max-width: 100%;
+}
+.picker select:hover { background: var(--panel); border-color: var(--border); }
+.picker select:focus-visible { outline: 2px solid var(--latest-fg); outline-offset: 2px; }
+.picker select option { color: var(--fg); background: var(--panel); font-weight: inherit; } /* same weight as the heading, or the select is sized too narrow for its bold text */
 .muted { color: var(--muted); }
 #legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; }
 #legend span { display: inline-flex; align-items: center; gap: 6px; }
@@ -69,3 +80,23 @@ footer { margin-top: 12px; font-size: 12px; }
   .row, .row.error { grid-template-columns: minmax(0, 1fr); align-items: stretch; }
   .label { flex-direction: row; align-items: baseline; justify-content: flex-start; gap: 8px; }
 }
+
+/* Promotion in progress: the card takes the promotion color and pulses (PLAN 14.3 P6).
+   Running is a ~1.6s heartbeat; waiting for a person is a slower ~3s breath so it reads as "paused".
+   Nothing blinks faster than once per second. */
+.cell.promoting { animation: heartbeat 1.6s ease-in-out infinite; }
+.cell.promoting.waiting { animation: breathe 3s ease-in-out infinite; }
+.cell.promoting .version { font-size: 14px; }
+.cell.promoting .arrow { opacity: .85; }
+.cell.promoting .status { font-weight: 600; opacity: 1; }
+@keyframes heartbeat {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 var(--glow, transparent); }
+  50% { opacity: .82; box-shadow: 0 0 12px 3px var(--glow, transparent); }
+}
+@keyframes breathe {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 var(--glow, transparent); }
+  50% { opacity: .88; box-shadow: 0 0 10px 2px var(--glow, transparent); }
+}
+@media (prefers-reduced-motion: reduce) { .cell.promoting, .cell.promoting.waiting { animation: none; } }
+body.no-motion .cell.promoting, body.no-motion .cell.promoting.waiting { animation: none; }
+#legend .promo-key { margin-left: 4px; }

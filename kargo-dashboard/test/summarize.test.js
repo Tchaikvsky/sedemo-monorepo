@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { buildLane, selectWarehouses, summarizeProject, summarizeAll, kargoLink, projectLink } from '../src/summarize.js';
+import { buildLane, buildRow, buildDashboard, selectWarehouses, kargoLink, projectLink } from '../src/summarize.js';
+import { createCollector } from '../src/collector.js';
 import { KargoApiError } from '../src/kargo-client.js';
 import { DEFAULT_THRESHOLDS as T } from '../src/config.js';
 import { sortFreight } from '../src/decay.js';
@@ -14,7 +15,7 @@ const fixture = (project, warehouse) => ({
   stages: load(project, 'stages').items,
   freight: Object.values(load(project, 'freight').groups).flatMap((g) => g.items),
 });
-// One lane (one warehouse's pipeline). Row-level assembly is tested through summarizeProject below.
+// One lane (one warehouse's pipeline). Row-level assembly is tested through runProject below.
 const row = (project, warehouse, overrides = {}, cfg = {}) => {
   const f = fixture(project, warehouse);
   return buildLane({ project, projectConfig: { displayName: project, ...cfg }, thresholds: T, ...f, ...overrides });
@@ -121,23 +122,32 @@ function fakeClient(tokensSeen = []) {
   };
 }
 
-test('summarizeAll: one failing project does not fail the others; order and per-project tokens kept', async () => {
+// Runs the real collector against a fake client, then builds one project's row (pure).
+const wantedOf = (pc) => ({ tokenEnv: 'T', all: !(pc.warehouses?.length), names: new Set(pc.warehouses || []) });
+async function runProject(client, name, projectConfig, ctxExtra = {}) {
+  const snapshot = await createCollector({ client }).collectProject(name, wantedOf(projectConfig), 't');
+  return buildRow(name, { displayName: name, ...projectConfig }, snapshot,
+    { thresholds: T, kargoUrl: 'https://kargo.example', ...ctxExtra });
+}
+
+test('collect + buildDashboard: one failing project does not fail the others; order and per-project tokens kept', async () => {
   const seen = [];
   const config = {
-    decay: { thresholds: T },
-    projects: {
-      locked: { displayName: 'locked', tokenEnv: 'T_LOCKED' },
+    kargo: { url: 'https://kargo.example' }, decay: { thresholds: T },
+    dashboards: { d: { id: 'd', name: 'D', projects: {
+      locked: { displayName: 'locked', warehouses: [], tokenEnv: 'T_LOCKED' },
       'demo-rollouts': { displayName: 'Rollouts', warehouses: ['demo-rollouts'], tokenEnv: 'T_MAIN' },
       'sedemo-app-demo': { displayName: 'App', warehouses: ['sedemo-app-demo'], tokenEnv: 'T_MAIN' },
-    },
+    } } },
   };
-  const out = await summarizeAll({ client: fakeClient(seen), config, env: { T_LOCKED: 'a', T_MAIN: 'b' } });
+  const { snapshots } = await createCollector({ client: fakeClient(seen) }).collect(config, { T_LOCKED: 'a', T_MAIN: 'b' });
+  const out = buildDashboard(config.dashboards.d, snapshots, { thresholds: T, kargoUrl: config.kargo.url });
+  assert.deepEqual(out.dashboard, { id: 'd', name: 'D' });
   assert.deepEqual(out.rows.map((r) => r.project), ['locked', 'demo-rollouts', 'sedemo-app-demo']);
   assert.match(out.rows[0].error, /token lacks access to project locked/);
   assert.equal(out.rows[1].error, null);
   assert.equal(out.rows[2].error, null);
   assert.deepEqual(seen.sort(), [['demo-rollouts', 'b'], ['locked', 'a'], ['sedemo-app-demo', 'b']]);
-  assert.ok(Date.parse(out.generatedAt));
 });
 
 test('kargoLink follows the Kargo URL patterns and encodes segments', () => {
@@ -155,13 +165,9 @@ test('projectLink follows the Kargo project URL pattern', () => {
 
 test('every row, including error rows, links its project name', async () => {
   const kargoUrl = 'https://kargo.example';
-  const good = await summarizeProject({
-    client: fakeClient(), project: 'demo-rollouts', projectConfig: { displayName: 'R', warehouses: [] }, token: 't', thresholds: T, kargoUrl,
-  });
+  const good = await runProject(fakeClient(), 'demo-rollouts', { displayName: 'R', warehouses: [] });
   assert.equal(good.projectUrl, `${kargoUrl}/project/demo-rollouts`);
-  const bad = await summarizeProject({
-    client: fakeClient(), project: 'locked', projectConfig: { displayName: 'L' }, token: 't', thresholds: T, kargoUrl,
-  });
+  const bad = await runProject(fakeClient(), 'locked', { displayName: 'L', warehouses: [] });
   assert.ok(bad.error);
   assert.equal(bad.projectUrl, `${kargoUrl}/project/locked`);
 });
@@ -180,18 +186,15 @@ test('rows link the latest version to its freight and each cell to its stage and
   assert.equal(prod.freightUrl, undefined, 'nothing deployed, so no freight to link');
 });
 
-test('summarizeAll passes the configured Kargo URL through', async () => {
-  const config = {
-    kargo: { url: 'https://kargo.example/' }, decay: { thresholds: T },
-    projects: { 'demo-rollouts': { displayName: 'R', warehouses: ['demo-rollouts'], tokenEnv: 'T' } },
-  };
-  const out = await summarizeAll({ client: fakeClient(), config, env: { T: 'x' } });
+test('buildDashboard passes the configured Kargo URL through to links', async () => {
+  const config = { dashboards: { d: { id: 'd', name: 'D', projects: { 'demo-rollouts': { displayName: 'R', warehouses: ['demo-rollouts'], tokenEnv: 'T' } } } } };
+  const { snapshots } = await createCollector({ client: fakeClient() }).collect(config, { T: 'x' });
+  const out = buildDashboard(config.dashboards.d, snapshots, { thresholds: T, kargoUrl: 'https://kargo.example/' });
   assert.match(out.rows[0].lanes[0].stages[0].stageUrl, /^https:\/\/kargo\.example\/project\/demo-rollouts\/stage\/dev$/);
 });
 
 // ---- Section 13: lanes ----
-const project = (name, projectConfig, client = fakeClient()) =>
-  summarizeProject({ client, project: name, projectConfig: { displayName: name, ...projectConfig }, token: 't', thresholds: T, kargoUrl: 'https://kargo.example' });
+const project = (name, projectConfig, client = fakeClient()) => runProject(client, name, projectConfig);
 const laneSummary = (l) => [l.warehouse, l.latest?.version, l.stages.map((c) => c.name), l.error];
 
 test('team-ada: two lanes under one project, each with its own (disjoint) pipeline', async () => {
@@ -278,4 +281,75 @@ test('every lane carries its own links', async () => {
     assert.match(l.latest.freightUrl, /^https:\/\/kargo\.example\/project\/team-ada\/freight\/[0-9a-f]+$/);
     for (const c of l.stages) assert.equal(c.stageUrl, `https://kargo.example/project/team-ada/stage/${c.name}`);
   }
+});
+
+// ---- Section 14: promotion state on cells ----
+const PROMO_CFG = { color: '#1e6fd9', waitingColor: '#7b1fa2', waitingStepPattern: 'wait-for|^get-user-input$', animate: true, activeRefreshIntervalSeconds: 5 };
+const promoInfo = (originName, currentStep = 1) => ({
+  name: 'dev.p1',
+  ref: { name: 'dev.p1', freight: { name: 'f1', origin: { kind: 'Warehouse', name: originName }, images: [{ repoURL: 'ghcr.io/akuity/sedemo-monorepo-rollouts-app', tag: '51-blue' }] }, status: { phase: 'Running' } },
+  status: { phase: 'Running', currentStep },
+  steps: [{ uses: 'git-clone', as: 'a' }, { uses: 'helm-template', as: 'b' }, { uses: 'wait-for-approval', as: 'c' }],
+});
+
+test('a running promotion appears on that stage\'s card with its step summary and target version', () => {
+  const r = row('demo-rollouts', 'demo-rollouts', { promotions: new Map([['dev', promoInfo('demo-rollouts', 1)]]), promotion: PROMO_CFG, kargoUrl: 'https://kargo.example' });
+  const dev = r.stages.find((c) => c.name === 'dev');
+  assert.deepEqual([dev.promotion.step, dev.promotion.steps, dev.promotion.uses, dev.promotion.waiting], [2, 3, 'helm-template', false]);
+  assert.equal(dev.promotion.targetVersion, '51-blue');
+  assert.equal(dev.promotion.targetFreightUrl, 'https://kargo.example/project/demo-rollouts/freight/f1');
+  assert.equal(dev.version, '50-blue', 'the deployed version is still the current one');
+  assert.equal(r.stages.find((c) => c.name === 'staging').promotion, null, 'other stages are unaffected');
+  const waiting = row('demo-rollouts', 'demo-rollouts', { promotions: new Map([['dev', promoInfo('demo-rollouts', 2)]]), promotion: PROMO_CFG });
+  assert.equal(waiting.stages.find((c) => c.name === 'dev').promotion.waiting, true);
+});
+
+test('a promotion only shows in the lane of the warehouse whose Freight it promotes', () => {
+  const promotions = new Map([['dev', promoInfo('sedemo-app-demo-chart', 0)]]);
+  const img = row('sedemo-app-demo', 'sedemo-app-demo', { promotions, promotion: PROMO_CFG });
+  const chart = row('sedemo-app-demo', 'sedemo-app-demo-chart', { promotions, promotion: PROMO_CFG });
+  assert.equal(img.stages.find((c) => c.name === 'dev').promotion, null);
+  assert.equal(chart.stages.find((c) => c.name === 'dev').promotion.step, 1);
+});
+
+test('without promotion settings or data every card has promotion: null', () => {
+  assert.ok(row('demo-rollouts', 'demo-rollouts').stages.every((c) => c.promotion === null));
+  assert.ok(row('demo-rollouts', 'demo-rollouts', { promotions: new Map(), promotion: PROMO_CFG }).stages.every((c) => c.promotion === null));
+});
+
+test('end to end: collector snapshot -> buildDashboard puts the promotion on the card', async () => {
+  const stages = structuredClone(load('demo-rollouts', 'stages').items);
+  stages.find((s) => s.metadata.name === 'staging').status.currentPromotion = {
+    name: 'staging.p9', freight: { name: 'f9', origin: { name: 'demo-rollouts' }, images: [{ repoURL: 'ghcr.io/akuity/sedemo-monorepo-rollouts-app', tag: '51-blue' }] },
+  };
+  const client = { ...fakeClient(), async listStages() { return stages; },
+    async getPromotion() { return { spec: { steps: [{ uses: 'git-clone' }, { uses: 'get-user-input' }] }, status: { phase: 'Running', currentStep: 1 } }; } };
+  const config = { dashboards: { d: { id: 'd', name: 'D', projects: { 'demo-rollouts': { displayName: 'R', warehouses: ['demo-rollouts'], tokenEnv: 'T' } } } } };
+  const { snapshots, active } = await createCollector({ client }).collect(config, { T: 'x' });
+  const out = buildDashboard(config.dashboards.d, snapshots, { thresholds: T, kargoUrl: 'https://k', promotion: PROMO_CFG });
+  const card = out.rows[0].lanes[0].stages.find((c) => c.name === 'staging');
+  assert.equal(active, true);
+  assert.deepEqual([card.promotion.step, card.promotion.steps, card.promotion.uses, card.promotion.waiting], [2, 2, 'get-user-input', true]);
+});
+
+test('a promotion that carries Freight from several warehouses shows in each of those lanes with its own target', () => {
+  const info = promoInfo('sedemo-app-demo', 5);
+  info.status.freightCollection = { items: {
+    'Warehouse/sedemo-app-demo': { name: 'f-img', origin: { name: 'sedemo-app-demo' }, images: [{ repoURL: 'ghcr.io/akuity/sedemo-app-demo', tag: '13' }] },
+    'Warehouse/sedemo-app-demo-chart': { name: 'f-chart', origin: { name: 'sedemo-app-demo-chart' }, commits: [{ repoURL: 'https://github.com/akuity/sedemo-platform', id: 'f450b5d719d6e40f8704dd3f57c774ae88a0d35a' }] },
+  } };
+  const promotions = new Map([['staging', info]]);
+  const img = row('sedemo-app-demo', 'sedemo-app-demo', { promotions, promotion: PROMO_CFG, kargoUrl: 'https://k' }).stages.find((c) => c.name === 'staging').promotion;
+  const chart = row('sedemo-app-demo', 'sedemo-app-demo-chart', { promotions, promotion: PROMO_CFG, kargoUrl: 'https://k' }).stages.find((c) => c.name === 'staging').promotion;
+  assert.deepEqual([img.targetVersion, img.targetFreightName], ['13', 'f-img']);
+  assert.deepEqual([chart.targetVersion, chart.targetFreightName], ['f450b5d', 'f-chart'], 'git-only warehouse: short sha of its own incoming commit');
+  assert.equal(chart.targetFreightUrl, 'https://k/project/sedemo-app-demo/freight/f-chart');
+});
+
+test('a promotion whose collection does not include a lane\'s warehouse does not show in that lane', () => {
+  const info = promoInfo('sedemo-app-demo', 5);
+  info.status.freightCollection = { items: { 'Warehouse/sedemo-app-demo': { name: 'f-img', origin: { name: 'sedemo-app-demo' } } } };
+  const promotions = new Map([['staging', info]]);
+  assert.ok(row('sedemo-app-demo', 'sedemo-app-demo', { promotions, promotion: PROMO_CFG }).stages.find((c) => c.name === 'staging').promotion);
+  assert.equal(row('sedemo-app-demo', 'sedemo-app-demo-chart', { promotions, promotion: PROMO_CFG }).stages.find((c) => c.name === 'staging').promotion, null);
 });
