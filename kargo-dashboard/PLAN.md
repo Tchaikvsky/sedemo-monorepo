@@ -663,3 +663,10 @@ Work on branch `feat/promotions-and-dashboards` off `main`. Commit at checkpoint
 | P8 | Link the promotion summary? | **Confirmed:** no URL pattern given, so not linked |
 | 15.2 | Keep accepting the legacy top-level `projects`? | **Confirmed:** yes, as one `default` dashboard, with a warning |
 | 15.5 | How to split today's `values.yaml` projects into dashboards | **Confirmed:** the owner wraps the existing list in one `default` dashboard; the agent leaves `values.yaml` alone |
+
+### 16.5 Implementation notes (2026-10-15)
+Built per 16.2. Deviations and additions:
+- **Legend glyph:** the legend shows a round swatch for "Promoting" (standing in for the card's `●`) and keeps `⏸` for "Waiting for input", instead of a swatch plus a glyph for both (P9). The swatch + glyph combination looked doubled.
+- **`deploy/chart/values.yaml` was not edited** (15.5): the owner migrates it. Until then the legacy `config.projects` form works with a startup warning.
+- **Dev-only dependency:** `puppeteer-core` (not installed in the image) powers `npm run test:e2e`, which runs the real server against `e2e/fake-kargo.mjs`, a fake Kargo API built on the repo fixtures. It covers the browser behavior of 14.8 and 15.3 and 16.3 items 3-6, because live promotions can only be started by the owner.
+- **Captured promotion:** the in-flight `currentPromotion.status` shape was **not** observed live (nothing was running, and the token is read-only), so the code reads progress from the reference when it has a `phase` and otherwise fetches the Promotion itself. See the verification section of the report for the live check the owner needs to trigger.

@@ -11,6 +11,8 @@ This project is a lightweight Node.js app that summarizes the current state of K
 - Individual cells show the version of that project deployed to that stage
 - Cell color is a visual indicator of the version decay (more below in Version Decay)
 - The first column in every lane is the latest freight version of that lane's warehouse
+- Several dashboards can be defined; the dashboard name in the page heading is a picker, and each dashboard has its own URL (see [Dashboards](#dashboards))
+- A stage that has a promotion in progress turns blue and pulses, and shows the step it is on (see [Promotions in progress](#promotions-in-progress))
 
 The visual is agnostic to stage names: there are no stage-name columns and rows are not aligned by name. Each lane is simply one warehouse's pipeline, left to right. The stage name appears as a small caption inside its cell.
 
@@ -24,6 +26,32 @@ Stages with no promotion steps ("control flow" stages) never hold Freight, so th
 - "Version" is determined from the warehouse's subscriptions:
   1. The first subscription that is an `image` or a `chart`: the image `Tag`, or the chart `version`, of the matching artifact in the Freight.
   2. Only if the warehouse has neither: the short (7 character) SHA of the first `git` subscription's commit.
+
+## Promotions in progress
+
+Each stage card checks whether a promotion is running. While one is:
+
+- the card turns the promotion color (default blue) and gives a gentle heartbeat pulse
+- the version line shows `current → target`, and each version links to its Freight
+- the status line summarizes the step, e.g. `● 5 of 7: helm-template`
+
+Some steps block until a person acts. When the current step matches `promotion.waitingStepPattern` (default `wait-for|^get-user-input$`: any `wait-for` step such as `wait-for-approval`, `git-wait-for-pr` or `snow-wait-for-condition`, plus the `get-user-input` form step) the card turns purple, pulses slowly, and reads `⏸ Waiting for input · 7 of 7: wait-for-approval`, so it is clear someone needs to respond.
+
+While any promotion is running the server refreshes every `promotion.activeRefreshIntervalSeconds` (default 5s) instead of `refreshIntervalSeconds`, so steps advance on screen. Animation is off for visitors who prefer reduced motion and when `promotion.animate` is `false`; the color, the ●/⏸ marker and the text still carry the state.
+
+Only a **running** promotion is shown. Promotions queued behind another one are not. A running promotion appears in the lane of the warehouse that supplied the Freight being promoted. The summary is not linked, because Kargo has no stable URL pattern for promotions; the stage link leads to the stage page, where Kargo shows it.
+
+## Dashboards
+
+A config can define several named dashboards, each with its own list of projects. The dashboard name in the page heading is a picker (shown only when there is more than one dashboard), and the URL is the state:
+
+| URL | Shows |
+|---|---|
+| `/` | the dashboard named by `defaultDashboard` |
+| `/d/<id>` | the dashboard with that key (shareable, bookmarkable; Back and Forward work) |
+| `/d/<unknown>` | a 404 page that links to the default |
+
+A project listed on several dashboards is fetched from Kargo once per refresh, so adding dashboards does not multiply API calls.
 
 ## Version Decay
 
@@ -60,11 +88,11 @@ npm start                            # listens on :8080
 | `KARGO_TOKEN` | Default API token (the variable name is configurable, see `tokenEnv`) |
 | `PORT` | HTTP port (default `8080`) |
 
-Endpoints: `/` (the dashboard), `/api/summary` (the JSON behind it), `/healthz` (503 until the first refresh completes).
+Endpoints: `/` and `/d/<id>` (the page), `/api/dashboards` (id, name and default flag for each dashboard), `/api/summary?dashboard=<id>` (the JSON behind a dashboard; the default when omitted), `/healthz` (503 until the first refresh completes).
 
 Docker: `docker build -t kargo-dashboard .`, then run it with the config mounted at `/app/config.json` and the token passed as an environment variable. The image is published as `ghcr.io/akuity/sedemo-monorepo-kargo-dashboard` by `.github/workflows/publish-kargo-dashboard.yml`.
 
-Tests: `npm test`. The tests under `test/fixtures` are scrubbed responses captured from a live Kargo API.
+Tests: `npm test` runs the unit tests. The tests under `test/fixtures` are scrubbed responses captured from a live Kargo API. `npm run test:e2e` drives the real server in Chrome against a fake Kargo API built on those fixtures (dashboard switching, promotion cards, reduced motion). It needs Chrome; set `CHROME_PATH` if it is not in a standard location.
 
 ## Configuration
 
@@ -74,15 +102,26 @@ See [`config.example.json`](config.example.json).
 - `kargo.tokenEnv`: name of the env var holding the API token (default `KARGO_TOKEN`)
 - `refreshIntervalSeconds`: how often the server re-reads Kargo, and the page re-polls (default 30)
 - `decay.thresholds`: ascending list of `{ max, label, color }`, where `max` is the highest "versions behind" count the entry covers. Only the last entry may (and must) have `max: null`
-- Projects to include, as a map (key order is display order), with individual values:
+- `defaultDashboard`: the dashboard `/` shows. Required when there is more than one dashboard
+- `dashboards`: a map of dashboard id to `{ name, projects }`. The id appears in URLs (`a-z`, `0-9` and dashes) and the key order is the picker order. `name` is required
+- `promotion`: optional promotion-card settings, all with defaults
+  - `color` (`#1e6fd9`) and `waitingColor` (`#7b1fa2`): `#rrggbb` card colors
+  - `waitingStepPattern` (`wait-for|^get-user-input$`): a regex tested against the current step's type
+  - `animate` (`true`): set `false` to turn the pulse off
+  - `activeRefreshIntervalSeconds` (`5`): refresh interval while a promotion runs, from 1 up to `refreshIntervalSeconds`
+- Each dashboard's `projects` is a map (key order is display order), with individual values:
   - `displayName`: optional label
   - `warehouse`: show one warehouse (by name). A single lane with no warehouse caption
   - `warehouses`: a list of warehouse names; each becomes its own lane inside the project's row, in list order, with its name as a caption. Use either `warehouse` or `warehouses`, not both
   - With neither, every warehouse the project has becomes a lane (sorted by name). A project with a single warehouse is a single lane with no caption
-  - `tokenEnv`: optional per-project token variable, overriding `kargo.tokenEnv`
+  - `tokenEnv`: optional per-project token variable, overriding `kargo.tokenEnv`. A project listed on several dashboards must use the same token everywhere
   - `excludeStages`: stages to exclude (regex if prefixed with `regex:`, or full match otherwise)
   - `includeStages`: stages to include (regex if prefixed with `regex:`, or full match otherwise)
   - Stages will first consider all includes, and then remove any excludes. Absence of defined includes will include all, and then apply excludes if any. Regexes are unanchored, so add `^` and `$` where needed.
+
+The same project may appear on several dashboards with different `displayName`, warehouses or stage filters.
+
+**Legacy format.** A top-level `projects` map (the format before dashboards) still works. It becomes one dashboard with id `default` named "Kargo Dashboard", and a deprecation warning is logged at startup. To migrate, move it under `dashboards.<id>.projects` and give the dashboard a `name`. Setting both `projects` and `dashboards` is an error.
 
 A project that fails as a whole (no token access, no warehouses) shows an error row. A single bad warehouse (for example a misspelled name in `warehouses`) shows an error in just that lane. Either way the other projects and lanes still render. `includeStages` and `excludeStages` apply to every lane of a project.
 
@@ -106,10 +145,13 @@ Kargo's API describes both project-level tokens (`POST /v1beta1/projects/{projec
 
 Kargo's API should expose all needed data. i.e. latest freight, what version is in each stage.
 
-This app uses the Kargo REST API (`/v1beta1`, verified against Kargo v1.12.1), with read-only calls per project per refresh (two, plus one freight call per lane):
+This app uses the Kargo REST API (`/v1beta1`, verified against Kargo v1.12.1), with read-only calls per project per refresh (two, plus one freight call per warehouse, plus one call per promotion the first time it is seen running):
 
 - `GET /v1beta1/projects/{project}/warehouses`
 - `GET /v1beta1/projects/{project}/stages` (all of the project's stages; each lane picks those that request its warehouse)
-- `GET /v1beta1/projects/{project}/freight?origins={warehouse}` (once per lane)
+- `GET /v1beta1/projects/{project}/freight?origins={warehouse}` (once per warehouse that any dashboard shows)
+- `GET /v1beta1/projects/{project}/promotions/{name}` (only for a promotion seen running; its steps are cached)
+
+A stage's running promotion comes from `status.currentPromotion` on the stage; its step list comes from the Promotion's `spec.steps` (already expanded from any PromotionTasks) and the live step from `status.currentStep`.
 
 The current version of a stage comes from `status.freightHistory[0].items["Warehouse/{warehouse}"]`.
