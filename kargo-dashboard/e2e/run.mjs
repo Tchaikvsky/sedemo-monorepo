@@ -99,11 +99,11 @@ try {
   d = await cell('dev');
   check('running: promotion blue with the 1.6s heartbeat', d.cls.includes('promoting') && !d.cls.includes('waiting') && d.bg === 'rgb(30, 111, 217)' && d.anim === 'heartbeat' && d.dur === '1.6s', JSON.stringify([d.bg, d.anim, d.dur]));
   check('running: "5 of 7: helm-template" and "50-blue → 51-blue"', d.status === '● 5 of 7: helm-template' && d.version === '50-blue → 51-blue', `${d.status} | ${d.version}`);
-  check('running: stage, current and target links', d.links.length === 3 && d.links[0].endsWith('/project/demo-rollouts/stage/dev') && d.links[2].endsWith('/freight/incoming-freight'), d.links.join(' '));
+  check('running: stage, current, target and promotion links', d.links.length === 4 && d.links[0].endsWith('/project/demo-rollouts/stage/dev') && d.links[2].endsWith('/freight/incoming-freight') && d.links[3].endsWith('/project/demo-rollouts/promotion/dev.p1'), d.links.join(' '));
   check('running: white text on blue; tooltip keeps the decay info', d.fg === 'rgb(255, 255, 255)' && d.title.includes('Promotion: dev.p1') && d.title.includes('Good: 0 versions behind'));
   const w = await cell('staging');
   check('waiting: purple, slow 3s breathing, ⏸ label with the step', w.cls.includes('waiting') && w.bg === 'rgb(123, 31, 162)' && w.anim === 'breathe' && w.dur === '3s' && w.status === '⏸ Waiting for input · 7 of 7: wait-for-approval', JSON.stringify([w.bg, w.anim, w.status]));
-  check('waiting: tooltip says someone must act', w.title.startsWith('Promotion is waiting for someone to act'));
+  check('waiting: tooltip says someone must act; the step summary links to the promotion page', w.title.startsWith('Promotion is waiting for someone to act') && w.links.at(-1).endsWith('/project/demo-rollouts/promotion/staging.p2'));
   check('other cards are unaffected', !(await cell('prod')).cls.includes('promoting'));
   check('while promoting the reported interval drops to the active value', (await summary()).refreshIntervalSeconds === ACTIVE);
 
