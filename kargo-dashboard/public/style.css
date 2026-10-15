@@ -81,3 +81,23 @@ footer { margin-top: 12px; font-size: 12px; }
   .row, .row.error { grid-template-columns: minmax(0, 1fr); align-items: stretch; }
   .label { flex-direction: row; align-items: baseline; justify-content: flex-start; gap: 8px; }
 }
+
+/* Promotion in progress: the card takes the promotion color and pulses (PLAN 14.3 P6).
+   Running is a ~1.6s heartbeat; waiting for a person is a slower ~3s breath so it reads as "paused".
+   Nothing blinks faster than once per second. */
+.cell.promoting { animation: heartbeat 1.6s ease-in-out infinite; }
+.cell.promoting.waiting { animation: breathe 3s ease-in-out infinite; }
+.cell.promoting .version { font-size: 14px; }
+.cell.promoting .arrow { opacity: .85; }
+.cell.promoting .status { font-weight: 600; opacity: 1; }
+@keyframes heartbeat {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 var(--glow, transparent); }
+  50% { opacity: .82; box-shadow: 0 0 12px 3px var(--glow, transparent); }
+}
+@keyframes breathe {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 var(--glow, transparent); }
+  50% { opacity: .88; box-shadow: 0 0 10px 2px var(--glow, transparent); }
+}
+@media (prefers-reduced-motion: reduce) { .cell.promoting, .cell.promoting.waiting { animation: none; } }
+body.no-motion .cell.promoting, body.no-motion .cell.promoting.waiting { animation: none; }
+#legend .promo-key { margin-left: 4px; }

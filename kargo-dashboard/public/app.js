@@ -24,6 +24,9 @@ function el(tag, className, text) {
   return e;
 }
 
+// Set from each payload (config.promotion); the defaults only matter before the first response.
+let promoStyle = { color: '#1e6fd9', waitingColor: '#7b1fa2', animate: true };
+
 function renderLegend(thresholds) {
   legendEl.replaceChildren();
   let prev = 0;
@@ -36,14 +39,38 @@ function renderLegend(thresholds) {
     legendEl.append(item);
     if (t.max !== null) prev = t.max + 1;
   }
+  // The round swatch stands in for the card's ● marker; the waiting card keeps its ⏸ marker.
+  for (const [color, text, round] of [[promoStyle.color, 'Promoting', true], [promoStyle.waitingColor, '⏸ Waiting for input', false]]) {
+    const item = el('span', 'promo-key');
+    const swatch = el('i');
+    if (round) swatch.style.borderRadius = '50%';
+    swatch.style.background = color;
+    item.append(swatch, document.createTextNode(text));
+    legendEl.append(item);
+  }
+}
+
+function promotionLabel(p) {
+  if (!p.steps || !p.uses) return '● Promoting…';
+  const where = `${p.step} of ${p.steps}: ${p.uses}`;
+  return p.waiting ? `⏸ Waiting for input · ${where}` : `● ${where}`;
 }
 
 function tooltip(cell) {
   const lines = [];
+  const p = cell.promotion;
+  if (p) {
+    lines.push(p.waiting ? 'Promotion is waiting for someone to act' : 'Promotion in progress');
+    lines.push(`Promotion: ${p.name}`);
+    if (p.alias) lines.push(`Step: ${p.alias}`);
+    if (p.message) lines.push(`Message: ${p.message}`);
+    if (p.startedAt) lines.push(`Started: ${new Date(p.startedAt).toLocaleString()}`);
+    lines.push('');
+  }
   if (cell.alias) lines.push(`Alias: ${cell.alias}`);
   if (cell.freightName) lines.push(`Freight: ${cell.freightName}`);
   if (cell.decay.behind !== null && cell.decay.behind !== undefined) {
-    lines.push(`${cell.decay.behind} version${cell.decay.behind === 1 ? '' : 's'} behind latest`);
+    lines.push(`${cell.decay.label}: ${cell.decay.behind} version${cell.decay.behind === 1 ? '' : 's'} behind latest`);
   }
   if (cell.since) lines.push(`Deployed since: ${new Date(cell.since).toLocaleString()}`);
   if (cell.createdAt) lines.push(`Created: ${new Date(cell.createdAt).toLocaleString()}`);
@@ -65,7 +92,27 @@ function linkOrText(tag, className, text, href) {
   return e;
 }
 
+// While a promotion runs the card takes the promotion color (blue, or purple when the current step
+// waits for a person), pulses, and shows "current → target" with the step summary.
+function renderPromotingCell(s) {
+  const p = s.promotion;
+  const color = p.waiting ? promoStyle.waitingColor : promoStyle.color;
+  const c = el('div', `cell promoting${p.waiting ? ' waiting' : ''}`);
+  c.style.background = color;
+  c.style.color = textColor(color);
+  c.style.setProperty('--glow', `${color}99`);
+  const version = el('span', 'version');
+  version.append(linkOrText('span', '', s.version ?? '—', s.freightUrl));
+  if (p.targetVersion) {
+    version.append(el('span', 'arrow', ' → '), linkOrText('span', '', p.targetVersion, p.targetFreightUrl));
+  }
+  c.append(linkOrText('span', 'stage', s.name, s.stageUrl), version, el('span', 'status', promotionLabel(p)));
+  c.title = tooltip(s);
+  return c;
+}
+
 function renderCell(s) {
+  if (s.promotion) return renderPromotingCell(s);
   const color = s.decay.color || NEUTRAL;
   const c = el('div', 'cell');
   c.style.background = color;
@@ -116,6 +163,8 @@ function renderRow(row) {
 }
 
 function render(data) {
+  promoStyle = data.promotionStyle || promoStyle;
+  document.body.classList.toggle('no-motion', promoStyle.animate === false);
   renderLegend(data.thresholds);
   rowsEl.replaceChildren(...data.rows.map(renderRow));
   bannerEl.hidden = !data.refreshError;
