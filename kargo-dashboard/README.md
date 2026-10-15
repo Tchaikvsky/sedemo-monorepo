@@ -39,7 +39,7 @@ Some steps block until a person acts. When the current step matches `promotion.w
 
 While any promotion is running the server refreshes every `promotion.activeRefreshIntervalSeconds` (default 5s) instead of `refreshIntervalSeconds`, so steps advance on screen. Animation is off for visitors who prefer reduced motion and when `promotion.animate` is `false`; the color, the ●/⏸ marker and the text still carry the state.
 
-Only a **running** promotion is shown. Promotions queued behind another one are not. A running promotion appears in the lane of the warehouse that supplied the Freight being promoted. The summary is not linked, because Kargo has no stable URL pattern for promotions; the stage link leads to the stage page, where Kargo shows it.
+Only a **running** promotion is shown. Promotions queued behind another one are not. A promotion deploys one Freight per warehouse the stage requests, so a running promotion appears in every lane whose warehouse is part of it, each lane showing its own incoming version. The summary is not linked, because Kargo has no stable URL pattern for promotions; the stage link leads to the stage page, where Kargo shows it.
 
 ## Dashboards
 

@@ -331,3 +331,25 @@ test('end to end: collector snapshot -> buildDashboard puts the promotion on the
   assert.equal(active, true);
   assert.deepEqual([card.promotion.step, card.promotion.steps, card.promotion.uses, card.promotion.waiting], [2, 2, 'get-user-input', true]);
 });
+
+test('a promotion that carries Freight from several warehouses shows in each of those lanes with its own target', () => {
+  const info = promoInfo('sedemo-app-demo', 5);
+  info.status.freightCollection = { items: {
+    'Warehouse/sedemo-app-demo': { name: 'f-img', origin: { name: 'sedemo-app-demo' }, images: [{ repoURL: 'ghcr.io/akuity/sedemo-app-demo', tag: '13' }] },
+    'Warehouse/sedemo-app-demo-chart': { name: 'f-chart', origin: { name: 'sedemo-app-demo-chart' }, commits: [{ repoURL: 'https://github.com/akuity/sedemo-platform', id: 'f450b5d719d6e40f8704dd3f57c774ae88a0d35a' }] },
+  } };
+  const promotions = new Map([['staging', info]]);
+  const img = row('sedemo-app-demo', 'sedemo-app-demo', { promotions, promotion: PROMO_CFG, kargoUrl: 'https://k' }).stages.find((c) => c.name === 'staging').promotion;
+  const chart = row('sedemo-app-demo', 'sedemo-app-demo-chart', { promotions, promotion: PROMO_CFG, kargoUrl: 'https://k' }).stages.find((c) => c.name === 'staging').promotion;
+  assert.deepEqual([img.targetVersion, img.targetFreightName], ['13', 'f-img']);
+  assert.deepEqual([chart.targetVersion, chart.targetFreightName], ['f450b5d', 'f-chart'], 'git-only warehouse: short sha of its own incoming commit');
+  assert.equal(chart.targetFreightUrl, 'https://k/project/sedemo-app-demo/freight/f-chart');
+});
+
+test('a promotion whose collection does not include a lane\'s warehouse does not show in that lane', () => {
+  const info = promoInfo('sedemo-app-demo', 5);
+  info.status.freightCollection = { items: { 'Warehouse/sedemo-app-demo': { name: 'f-img', origin: { name: 'sedemo-app-demo' } } } };
+  const promotions = new Map([['staging', info]]);
+  assert.ok(row('sedemo-app-demo', 'sedemo-app-demo', { promotions, promotion: PROMO_CFG }).stages.find((c) => c.name === 'staging').promotion);
+  assert.equal(row('sedemo-app-demo', 'sedemo-app-demo-chart', { promotions, promotion: PROMO_CFG }).stages.find((c) => c.name === 'staging').promotion, null);
+});

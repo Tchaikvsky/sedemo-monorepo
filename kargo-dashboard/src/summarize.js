@@ -41,13 +41,24 @@ export function buildLane({ project, projectConfig, warehouse, stages, freight, 
     }
     : null;
 
-  // A stage's running promotion belongs to the lane whose warehouse the promoted Freight came from.
+  // A promotion deploys one Freight per warehouse the stage requests (its freightCollection), so it
+  // shows in every lane whose warehouse is part of it, each with that lane's own incoming Freight.
+  // Without a collection, fall back to the primary Freight's warehouse.
   const promotionFor = (stageName) => {
     if (!promotion) return null;
     const info = promotions?.get(stageName);
-    const origin = info?.ref?.freight?.origin?.name;
-    if (!info || (origin && origin !== whName)) return null;
-    return promotionState(info, { promotion, source, kargoUrl, project });
+    if (!info) return null;
+    const items = info.status?.freightCollection?.items;
+    let incoming;
+    if (items && Object.keys(items).length) {
+      incoming = items[`Warehouse/${whName}`];
+      if (!incoming) return null;
+    } else {
+      const origin = info.ref?.freight?.origin?.name;
+      if (origin && origin !== whName) return null;
+      incoming = info.ref?.freight;
+    }
+    return promotionState(info, { promotion, source, kargoUrl, project, freight: incoming });
   };
 
   const ordered = orderStages(stages, whName, warn).filter((r) => !r.controlFlow);

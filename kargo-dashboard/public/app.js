@@ -103,7 +103,7 @@ function renderPromotingCell(s) {
   c.style.setProperty('--glow', `${color}99`);
   const version = el('span', 'version');
   version.append(linkOrText('span', '', s.version ?? '—', s.freightUrl));
-  if (p.targetVersion) {
+  if (p.targetVersion && p.targetVersion !== s.version) {
     version.append(el('span', 'arrow', ' → '), linkOrText('span', '', p.targetVersion, p.targetFreightUrl));
   }
   c.append(linkOrText('span', 'stage', s.name, s.stageUrl), version, el('span', 'status', promotionLabel(p)));
@@ -203,6 +203,9 @@ function buildTitle() {
     o.value = d.id;
     select.append(o);
   }
+  // Browsers size a select from its options at normal weight, which clips the bold heading text.
+  const longest = Math.max(...dashboards.map((d) => (d.default ? `${d.name} (default)` : d.name).length));
+  select.style.minWidth = `calc(${longest * 1.15}ch + 40px)`;
   select.addEventListener('change', () => {
     const next = dashboards.find((d) => d.id === select.value);
     history.pushState({}, '', pathFor(next));

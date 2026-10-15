@@ -20,7 +20,9 @@ function waitingRegex(source) {
 //   ref    - stage.status.currentPromotion (has `freight`, the Freight being promoted)
 //   status - the Promotion status to read progress from (the reference's, or a freshly fetched one)
 //   steps  - [{ uses, as }] from the Promotion's spec, or null when it could not be fetched
-// `ctx` is { promotion: <config.promotion>, source: <version source>, kargoUrl, project }.
+// `ctx` is { promotion: <config.promotion>, source: <version source>, kargoUrl, project, freight? } where
+//   freight - the Freight this lane's warehouse is receiving (a promotion deploys one Freight per warehouse
+//             the stage requests); defaults to the promotion's primary Freight.
 // Returns the 14.6 object, or null when the stage has no active promotion.
 export function promotionState(info, ctx) {
   if (!info || !isActivePromotion(info.ref)) return null;
@@ -34,7 +36,7 @@ export function promotionState(info, ctx) {
   const step = steps ? steps[clamped] : null;
   const uses = step?.uses ?? null;
 
-  const freight = info.ref.freight;
+  const freight = ctx.freight !== undefined ? ctx.freight : info.ref.freight;
   const target = freight ? versionFor(freight, source) : null;
   return {
     name: info.name,
