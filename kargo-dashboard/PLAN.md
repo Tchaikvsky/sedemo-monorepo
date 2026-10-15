@@ -1,6 +1,6 @@
 # Kargo Dashboard — Implementation Plan
 
-Source of truth for intent: [README.md](README.md). This plan turns it into concrete, ordered work. Owner decisions are in section 11. Nothing is open. The one external dependency, the API token, is handled by the protocol in section 12. **Change request 1 (multiple warehouses per project) is planned in section 13 and supersedes 6.1 (including its "multiple warehouses" error), 6.7 and the frontend row layout where they disagree.** Where this plan and the README disagree, follow this plan and update the README in step 12.
+Source of truth for intent: [README.md](README.md). This plan turns it into concrete, ordered work. Owner decisions are in section 11. Nothing is open. The one external dependency, the API token, is handled by the protocol in section 12. **Change request 1 (multiple warehouses per project) is planned in section 13 and supersedes 6.1 (including its "multiple warehouses" error), 6.7 and the frontend row layout where they disagree.** **Change requests 2 (live promotion status on cards) and 3 (multiple dashboards) are designed in sections 14–16, which revisit the data-fetching architecture; where they disagree with earlier sections, sections 14–16 win.** Where this plan and the README disagree, follow this plan and update the README in step 12.
 
 ## 1. Goal
 
@@ -424,3 +424,242 @@ Project          Lane (warehouse)    latest   cells (that warehouse's pipeline, 
 - Done per 13.6 steps 1-4 and 6; step 5 covered the README, `config.example.json` and the PLAN markers.
 - **Deviation:** `deploy/chart/values.yaml` was left untouched. The owner had already added the plural form (`team-ada`) and several no-key projects there, which work under the new rules, so no edit was needed.
 - Phone-width caveat: captioned lanes show the latest cell and the first stage cell before the lane scrolls sideways. The page itself does not overflow.
+
+
+---
+
+# Change requests 2 and 3 (designed 2026-10-15, not implemented)
+
+Sections 14–16 are the build instructions. Section 14 is the live promotion status on cards (CR2). Section 15 is multiple dashboards (CR3). Section 16 is the shared architecture change both need, plus execution order, acceptance criteria and the report. Decisions marked **(owner confirmed 2026-10-15)** have a recommended default the agent implements unless the owner says otherwise.
+
+## 14. CR2: live promotion status on stage cards
+
+### 14.1 Requirement (owner, 2026-10-15)
+- Each stage card checks whether a promotion is in progress.
+- While one is active, the card switches to a configured color (default blue), plays a gentle heartbeat (pulse) effect, and summarizes the step it's on, e.g. `5 of 7: helm-template`.
+- Some promotions wait for a person (approval, a PR merge, a ticket, a form). Those steps are recognized by `wait-for` in the step name, **plus the `get-user-input` step** (owner amendment, 2026-10-15). The card must clearly show that the promotion is **waiting for interaction**.
+
+### 14.2 Kargo facts (verified 2026-10-15 against v1.12.1 source, the API spec, and live Promotions)
+- **Running promotions are free to detect.** `Stage.status.currentPromotion` is documented as "a reference to the currently Running promotion". We already fetch every stage, so detection costs no extra calls. It is a `PromotionReference`: `{ name, freight, status, finishedAt }`. On a completed reference, `status` carried `phase`, `currentStep`, `stepExecutionMetadata[]` (each `{ alias, status, message, startedAt, finishedAt }`), `freight` and `freightCollection`. **It does not carry the step list**, so the step type and the total count need the Promotion itself.
+- **Promotion objects:** `GET /v1beta1/projects/{project}/promotions/{name}`. There is also `GET .../promotions?stage=<stage>` (lists the ~20 retained Promotions for a stage, heavy).
+  - `spec.steps[]` is **already expanded**: PromotionTask steps are inlined with aliases such as `task-1::step-1` and `push-manifests::wait-for-pr`. So `spec.steps.length` is the true total.
+  - Each step has `uses` (the step type, e.g. `helm-template`) and `as` (the alias).
+  - `status.currentStep` is a **0-based index** into `spec.steps`. A succeeded 22-step Promotion reported `currentStep: 21`.
+  - Conditional steps that didn't run show `status: Skipped` but still count toward the total.
+- **Phases:** `Pending` (queued; per-stage queue ordered by creation time), `Running`, `Succeeded`, `Failed`, `Errored`, `Aborted`. A step waiting on people keeps the Promotion **Running** (documented for `wait-for-approval`).
+- **Waiting steps in Kargo v1.12.1:**
+  - `wait-for-approval` (Akuity Platform v1.12.0+, beta: "pauses a promotion until the required number of users approve, or one rejects");
+  - `get-user-input` (Akuity Platform v1.12.0+: "pauses a promotion and waits for a user to submit input through a form in the Kargo UI", defined by a JSON schema);
+  - `git-wait-for-pr`, `gh-wait-for-issue-state`, `gha-wait-for-workflow` and `snow-wait-for-condition`.
+
+  **Only `wait-for-approval` starts with `wait-for`.** Four others contain it mid-name (this repo's own pipelines use `git-wait-for-pr` and `snow-wait-for-condition`), and `get-user-input` doesn't contain it at all.
+- **`PromotionRequest`** (and `Stage.status.currentPromotionRequest`) is Kargo Enterprise fan-out of Freight to Targets. It is **not** an approval queue and is out of scope.
+- No promotion was running at capture time, so the in-flight shape of `currentPromotion.status` has not been observed live (see 14.8).
+
+### 14.3 Decisions
+- **P1 What counts as active.** A card is "promoting" when its stage has `status.currentPromotion` set and its `status.phase` is absent, `Running` or `Pending`. **Queued (`Pending`) Promotions behind another, or held by a closed promotion window, are out of scope for this change.** Detecting them needs the heavy per-stage Promotions list on every refresh. *(owner confirmed 2026-10-15)*
+- **P2 Waiting detection.** A step is "waiting for interaction" when its `uses` matches the configured regex `promotion.waitingStepPattern`, **default `wait-for|^get-user-input$`**. `wait-for` matches anywhere, so it catches all five `wait-for` steps; `get-user-input` is matched exactly (owner amendment, 2026-10-15). A rule of "starts with `wait-for`" (`^wait-for`) would catch only `wait-for-approval`, missing the PR and ServiceNow waits this repo uses. Changing it is one config value. *(owner confirmed: contains `wait-for`, plus `get-user-input`)*
+- **P3 Step label.** `"{N} of {M}: {uses}"` with `N = currentStep + 1` (clamped to `1..M`), `M = spec.steps.length`, and the step **type** (`uses`) as the label, matching the owner's example. The alias (e.g. `push-manifests::wait-for-pr`) and the current step's `stepExecutionMetadata.message`, if any, go in the tooltip.
+- **P4 Waiting look.** A waiting card uses a separate color, `promotion.waitingColor`, **default purple `#7b1fa2`**. It is distinct from blue and from all four decay colors. The status line reads `Waiting for input · {N} of {M}: {uses}`, prefixed with ⏸ so the meaning doesn't rely on color alone. *(owner confirmed 2026-10-15)*
+- **P5 Card content while promoting.**
+  - Stage name (link unchanged).
+  - Version shows `current → target`, e.g. `50-blue → 51-blue`. The target is the version of `currentPromotion.freight` (same version rule as 6.2), and each version links to its own Freight.
+  - The status line is replaced by the promotion summary (P3 or P4).
+  - The decay label moves into the tooltip.
+- **P6 Motion.**
+  - **Running:** a gentle heartbeat. Opacity and glow pulse from `1 → 0.82 → 1` with a soft outer `box-shadow` in the promotion color, `1.6s ease-in-out infinite`.
+  - **Waiting:** a slower "breathing" pulse (`3s`) to read as "paused, needs you" rather than "busy".
+  - Under `prefers-reduced-motion: reduce` there is no animation; the color, the ⏸/● marker and the text carry the state.
+  - `promotion.animate: false` disables motion globally.
+  - No flashing faster than once per second (photosensitivity).
+- **P7 Faster refresh while something is promoting.** A 30s poll is too slow to watch steps advance. When any configured stage has a running promotion, the server refreshes every `promotion.activeRefreshIntervalSeconds` (**default 5**). Otherwise it uses `refreshIntervalSeconds`. The API payload reports the interval in effect so the page polls at the same rate.
+- **P8 Promotion links.** The owner has given URL patterns for projects, stages and Freight but **not for promotions**, so the promotion summary is not linked. The stage link already leads to the stage, where Kargo shows the promotion. *(owner confirmed 2026-10-15; a pattern can be added later)*
+- **P9 Legend.** Add `● Promoting` (promotion color) and `⏸ Waiting for input` (waiting color) to the legend.
+
+### 14.4 Configuration (new top-level block, all optional)
+```jsonc
+"promotion": {
+  "color": "#1e6fd9",                  // running promotion card color
+  "waitingColor": "#7b1fa2",           // card color while the current step is a waiting step
+  "waitingStepPattern": "wait-for|^get-user-input$",  // regex tested against the current step's `uses`; compiled at startup
+  "animate": true,
+  "activeRefreshIntervalSeconds": 5    // integer >= 1, <= refreshIntervalSeconds
+}
+```
+Validation follows section 4 style: fail fast. Colors must be `#rrggbb`. The pattern must compile.
+
+### 14.5 Data flow
+1. The stages call (already made) yields `currentPromotion` per stage.
+2. For each stage with an active `currentPromotion`, the collector (section 16) needs that Promotion's `spec.steps`.
+   - `GET /v1beta1/projects/{project}/promotions/{name}` is fetched **once per Promotion name** and the step list is cached; `spec.steps` never changes for a given Promotion.
+   - Live progress (`currentStep`, `phase`, per-step metadata) is read from the stage's `currentPromotion.status` on every refresh.
+   - If that status lacks `currentStep`, fall back to the fetched Promotion's `status` and re-fetch it each refresh while active.
+   - Evict cache entries whose Promotion is no longer current anywhere.
+3. A promotion fetch failure must not break the card. Show `Promoting…` without step detail, and log a warning with no token in it.
+
+### 14.6 View model addition (per stage cell)
+```jsonc
+"promotion": null | {
+  "name": "dev.01j…",              // Promotion name, for the tooltip
+  "phase": "Running",
+  "step": 5, "steps": 7,           // 1-based; steps = spec.steps.length (null if unknown)
+  "uses": "helm-template",          // null if unknown
+  "alias": "step-4",
+  "waiting": false,
+  "message": null,                  // current step's stepExecutionMetadata message, if any
+  "targetVersion": "51-blue", "targetFreightName": "…", "targetFreightUrl": "…",
+  "startedAt": "…"
+}
+```
+The payload also carries `promotionStyle: { color, waitingColor, animate }` for the legend and the CSS variables, and `refreshIntervalSeconds` (the interval currently in effect).
+
+### 14.7 Modules
+- **New pure module `src/promotion.js`:** `promotionState(stage, promotionSteps, cfg, versionSource)` returns the 14.6 object or `null`. It handles step clamping, waiting detection, missing step lists, and target-version resolution (reusing `versionFor`).
+- **`kargo-client.js`:** add `getPromotion(project, name, token)`.
+- **`summarize.js`:** a cell gets `promotion` from `promotionState`.
+- **Frontend:**
+  - cell class `promoting` or `promoting waiting`;
+  - CSS variables `--promo` and `--promo-wait` set from the payload;
+  - `@keyframes heartbeat` and `breathe` animations, with the reduced-motion override;
+  - text color chosen by the existing luminance helper;
+  - the legend entries from P9.
+
+### 14.8 Tests and live verification
+- **Unit tests (`promotion.test.js`) use real shapes.** Capture one live Promotion with an approval or PR wait step (e.g. a completed `demo-snow` `prod` Promotion: 22 steps ending in `snow-wait-for-condition`) and scrub it into `test/fixtures/promotions/`. Derive "running" variants from it by setting `currentStep` and `phase`. Cases:
+  - mid-run (`5 of 22: helm-template`);
+  - on `snow-wait-for-condition` (waiting, with the default pattern);
+  - the same step with pattern `^wait-for` (not waiting);
+  - `wait-for-approval` (waiting, synthetic step);
+  - `get-user-input` (waiting, synthetic step), and a look-alike such as `get-user-input-extra` (**not** waiting, since the match is exact);
+  - `currentStep` past the end (clamped);
+  - steps unknown because the fetch failed (`Promoting…`);
+  - no `currentPromotion` (`null`);
+  - a terminal phase on a stale reference (`null`);
+  - the target version resolved through a chart-first warehouse.
+- **Collector tests:** each Promotion fetched once across two refreshes, evicted once no longer current, and a fetch failure isolated to that one card.
+- **Frontend:** the DOM shows classes and text for both states, the animation is suppressed under reduced motion (checked with an emulated media feature), and the legend has the two new entries.
+- **Live (needs the owner):** no promotion was running at design time, and the dashboard's token is read-only. At verification time **the agent asks the owner to start promotions**: one ordinary run (e.g. `demo-rollouts` → `dev`) and one that waits (e.g. `demo-snow` → `prod`, which blocks on `snow-wait-for-condition`). The agent records the observed in-flight `currentPromotion.status` shape. If it differs from 14.2, the agent follows reality and reports the deviation. The agent must never promote, approve or abort anything itself.
+
+## 15. CR3: multiple dashboards
+
+### 15.1 Requirement (owner, 2026-10-15)
+- The app serves several named dashboards.
+- Each dashboard wraps today's `projects` configuration and adds a name.
+- A top-level setting picks the default dashboard.
+- Other dashboards are selected from a drop-down or menu, styled for the best look.
+
+### 15.2 Configuration
+```jsonc
+{
+  "kargo": { "url": "https://kargo.akpdemoapps.link", "tokenEnv": "KARGO_TOKEN" },
+  "refreshIntervalSeconds": 30,
+  "decay": { "thresholds": [ ... ] },
+  "promotion": { ... },                         // section 14.4
+  "defaultDashboard": "demos",                  // key of a dashboard below
+  "dashboards": {                               // key = URL id; key order = menu order
+    "demos": {
+      "name": "SE Demos",
+      "projects": { "demo-rollouts": { "warehouse": "demo-rollouts" }, "demo-snow": {} }
+    },
+    "teams": {
+      "name": "Team Apps",
+      "projects": { "team-ada": { "warehouses": ["akkoma-main", "akkoma-release"] }, "sedemo-app-demo": {} }
+    }
+  }
+}
+```
+- **Dashboard keys** must match `^[a-z0-9][a-z0-9-]{0,62}$` because they appear in URLs. `name` is a required non-empty string. Each dashboard's `projects` follows sections 4 and 13 exactly (same validation, same `warehouse`/`warehouses` rules).
+- **`defaultDashboard`:** must name an existing key. It's optional only when there is exactly one dashboard. With two or more it is required, and its absence is a startup error with a clear message.
+- **The same project may appear in several dashboards**, even with different `displayName`, warehouses or stage filters. Its `tokenEnv` must resolve to the same variable everywhere it appears; a conflict is a startup error, because the project is fetched once (section 16).
+- **Legacy shape:** a top-level `projects` (today's format) is still accepted. It becomes one dashboard with key `default` and name `"Kargo Dashboard"`, and a one-line deprecation warning is logged. Setting both `projects` and `dashboards` is a startup error. *(owner confirmed 2026-10-15)*
+- **Out of scope:** per-dashboard decay thresholds, refresh intervals or tokens. They're global, as now. This is easy to add later if asked.
+
+### 15.3 URLs and API
+- **Page URLs:**
+  - `/` shows the default dashboard;
+  - `/d/<id>` shows a specific one, so links can be bookmarked and shared;
+  - `/d/<unknown>` shows a friendly "No dashboard named …" message with a link to the default and an HTTP 404 status.
+- **Static assets** must be referenced by absolute path (`/style.css`, `/app.js`) so they resolve under `/d/<id>`. The app is assumed to be served at the domain root, which matches the chart's Ingress (`path: /`).
+- **API:**
+  - `GET /api/dashboards` returns `[{ "id", "name", "default": bool }]` in config order.
+  - `GET /api/summary?dashboard=<id>` returns the 13.5 payload for that dashboard plus `dashboard: { id, name }`. Without the parameter it serves the default. An unknown id returns 404 JSON.
+  - `/healthz` is unchanged.
+- **Switching dashboards** in the page uses `history.pushState` to `/d/<id>` and re-renders without a full reload. Back and forward work through `popstate`. `document.title` becomes `<dashboard name> · Kargo Dashboard`.
+
+### 15.4 Look and feel (recommended)
+- **The dashboard name is the page title and also the switcher.** The header reads `Kargo Dashboard` in small muted text, with the current dashboard name below it in the existing `h1` style and a chevron `▾` after it. Clicking it opens the list of dashboards. This is the familiar "title as picker" pattern (Grafana, Linear). It keeps the header uncluttered, scales to many dashboards, and works at phone width, where a tab row would overflow.
+- **Build it on a native `<select>`** styled to look like the heading: `appearance: none`, inherited font, a custom chevron, a visible focus ring. That gives keyboard, screen-reader and mobile picker support for free. Options list dashboard names, with the default suffixed ` (default)`.
+- **With a single dashboard**, render a plain heading with no chevron, so it looks exactly as it does today.
+- The legend stays on the right of the header and wraps below it on narrow screens, as now.
+- No per-viewer memory of the last dashboard: `/` always means the configured default, and the URL is the state.
+
+### 15.5 Helm chart and docs
+- **`deploy/chart/values.yaml` (owner decision, 2026-10-15):** the owner migrates this file themselves by wrapping the existing `config.projects` block, unchanged, in a single dashboard: `config.dashboards.default.name` plus `config.dashboards.default.projects`. **The agent does not edit `values.yaml` and does not propose a split.** Until the owner edits it, the legacy `config.projects` must keep working via the 15.2 fallback (with the warning). The startup error for a dashboard without a `name` must name the offending key, so a mis-nested `config.dashboards.projects` gets a clear message, e.g. `dashboards.projects: missing name (did you mean dashboards.<id>.projects?)`. The ConfigMap template needs no change, since it renders `config` verbatim.
+- Update `config.example.json` to a two-dashboard example, and update the README's configuration reference and "Running" notes for the URLs.
+
+## 16. Shared architecture change, execution order and acceptance (CR2 + CR3)
+
+### 16.1 Why the architecture changes
+Today `summarizeAll` walks `config.projects`, and fetching is tangled with building rows (`summarizeProject`). With dashboards, one Kargo project can appear in several dashboards with different views. With promotions, there is extra per-promotion state that must be cached across refreshes. So fetching and presentation are split:
+
+- **New `src/collector.js` (all I/O orchestration).** Each refresh, it builds the set of **unique projects across all dashboards** and fetches a **snapshot** per project, concurrently:
+  - `warehouses`;
+  - all `stages`;
+  - Freight for the **union** of warehouses any dashboard needs for that project (resolved after the warehouses list, so "no key = all" works);
+  - step lists for active promotions (14.5 cache).
+
+  Errors are recorded at project level (token, warehouses or stages call) and at warehouse level (a Freight call). It owns the promotion step cache. The calls per project match today's, plus one per newly seen running promotion.
+- **`summarize.js` becomes pure.** `buildDashboard(dashboardConfig, snapshots, ctx)` returns `{ dashboard, rows }`, where `buildRow(projectKey, projectConfig, snapshot, ctx)` reuses `selectWarehouses`, `buildLane` and the new `promotionState`. A project-level snapshot error becomes an error row in every dashboard that lists the project. A warehouse-level error becomes that lane's error.
+- **`server.js`.** One refresh loop for everything:
+  1. The collector produces the snapshots.
+  2. Every dashboard's payload is built from them and cached.
+  3. The `/api/summary?dashboard=` handler serves from the cache.
+
+  The interval adapts per P7. The "keep last good data on failure" behavior from section 7 is unchanged, now per dashboard.
+- **Unchanged modules:** `stage-order.js`, `stage-filter.js`, `version.js` and `decay.js`.
+
+### 16.2 Execution order (each step with tests; commit at each checkpoint)
+Work on branch `feat/promotions-and-dashboards` off `main`. Commit at checkpoints. **Do not push or open a PR.** The ground rules in section 10a and the token protocol in section 12 still apply.
+1. **Config:** the `dashboards`, `defaultDashboard`, legacy wrapping, `promotion` block, key, `tokenEnv` consistency and color validation (15.2, 14.4).
+2. **Collector:** extract fetching out of `summarize.js` into `collector.js`, with no behavior change yet. Prove it by running the existing summarize tests through the new path; they must stay green.
+3. **Dashboards:** `buildDashboard`, the per-dashboard payload cache, the routes, `/api/dashboards` and `?dashboard=` (15.3).
+4. **Frontend switcher and routing** (15.4).
+5. **Promotions:** `kargo-client.getPromotion`, the collector cache, `promotion.js`, the cell model (14.5–14.7).
+6. **Promotion card styling, animation, legend and adaptive polling** (P4–P7, P9).
+7. **Docs and config:** README, `config.example.json`, `values.yaml` migration (15.5), and a PLAN status note.
+8. **Live verification:** two dashboards, then the owner-triggered promotions (14.8).
+
+### 16.3 Acceptance criteria (all must hold)
+1. `npm test` passes, covering every case listed in 14.8 and 15.2 (config errors included) and the collector behaviors. All previously passing tests still pass, updated only for moved functions.
+2. A config with `dashboards.projects` (mis-nested, no `name`) fails at startup with the message from 15.5.
+3. With a two-dashboard config:
+   - `/` shows the default, and `/d/<other>` shows the other.
+   - Switching via the title picker changes the URL, and Back returns to the previous dashboard.
+   - `/d/nope` returns 404 with a link to the default.
+   - A project listed in both dashboards is fetched **once** per refresh (assert on the mocked client's call log).
+4. A legacy single-`projects` config still works unchanged, with the deprecation warning. Single-dashboard mode shows no chevron.
+5. During owner-triggered promotions:
+   - the running card is the promotion color with the heartbeat, and reads `N of M: <uses>` matching Kargo's UI step;
+   - the waiting card is the waiting color with ⏸ and `Waiting for input …`;
+   - the poll interval drops to the active value and returns to normal after the promotions finish;
+   - with reduced motion emulated, nothing animates.
+6. No page-level horizontal scroll at 390px. The switcher is usable by keyboard.
+7. No token, hostname or approver identity appears in new fixtures or logs. The repo-wide token grep is clean.
+
+**Required report:**
+- the test summary;
+- screenshots of both dashboards and both promotion states, desktop and phone;
+- the observed live `currentPromotion.status` shape while running;
+- the request counts per refresh before and after;
+- every deviation from sections 14–16, with the reason.
+
+### 16.4 Owner decisions (all confirmed 2026-10-15)
+| # | Decision | Default in this plan |
+|---|---|---|
+| P1 | Show queued (`Pending`) promotions too? | **Confirmed:** no, only running; queued needs a heavy per-stage call |
+| P2 | Which steps count as waiting for interaction? | **Confirmed:** `uses` contains `wait-for` (approval, PR, GitHub, GHA, ServiceNow waits) **or** is exactly `get-user-input` (form input). Default pattern `wait-for\|^get-user-input$` |
+| P4 | Waiting color | **Confirmed:** purple `#7b1fa2` (running stays blue `#1e6fd9`) |
+| P7 | Faster refresh while promoting | **Confirmed:** 5s while any promotion runs, else `refreshIntervalSeconds` |
+| P8 | Link the promotion summary? | **Confirmed:** no URL pattern given, so not linked |
+| 15.2 | Keep accepting the legacy top-level `projects`? | **Confirmed:** yes, as one `default` dashboard, with a warning |
+| 15.5 | How to split today's `values.yaml` projects into dashboards | **Confirmed:** the owner wraps the existing list in one `default` dashboard; the agent leaves `values.yaml` alone |
