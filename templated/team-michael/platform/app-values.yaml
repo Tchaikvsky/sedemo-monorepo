@@ -1,0 +1,9 @@
+project:
+  group: sedemo-team-michael
+
+image:
+  repository: ghcr.io/akuity/sedemo-monorepo-rollouts-app
+ingress:
+  custom_prefix: michael
+rollouts:
+  enabled: true
