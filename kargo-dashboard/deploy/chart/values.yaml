@@ -33,6 +33,7 @@ config:
         team-eddie: {}
         team-emily: {}
         team-namho: {}
+        beyond-k8s: {}
     eddies:
       name: Eddie's Dashboard
       projects:
