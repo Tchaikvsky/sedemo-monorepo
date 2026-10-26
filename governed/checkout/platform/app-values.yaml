@@ -21,7 +21,7 @@ ingress:
   custom_prefix: checkout-gov
 
 rollouts:
-  enabled: true
+  enabled: false
 
 environments:
   staging: true

@@ -10,7 +10,7 @@ ingress:
   custom_prefix: payments-gov
 
 rollouts:
-  enabled: true
+  enabled: false
 
 environments:
   staging: true
