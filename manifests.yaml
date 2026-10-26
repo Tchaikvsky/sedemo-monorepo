@@ -1,0 +1,88 @@
+---
+# Source: apps-template/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: 'gov-payments-config'
+  labels:
+    app.kubernetes.io/name: 'gov-payments'
+data:
+  application.name: 'gov-payments'  
+  more.info: 'This is a configmap for gov-payments application'
+---
+# Source: apps-template/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-stable
+  annotations:
+    prometheus.io/fastscrape: 'true'
+spec:
+  ports:
+  - port: 80
+    targetPort: 8080
+  selector:
+    app: 'gov-payments-app'
+---
+# Source: apps-template/templates/rollout.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "gov-payments-app"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: "gov-payments-app"
+  template:
+    metadata:
+      labels:
+        app: "gov-payments-app"
+        purpose: payments-api
+    spec:
+      containers:
+        - image: "ghcr.io/akuity/sedemo-monorepo-rollouts-app:50-blue"
+          name: "gov-payments-app"
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SEMVER
+              value: "50-blue"
+            - name: STAGE
+              value: dev
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            
+  minReadySeconds: 30
+  revisionHistoryLimit: 3
+---
+# Source: apps-template/templates/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: stable-ingress
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - "dev.payments-gov.akpdemoapps.link"
+    secretName: tls-secret
+  rules:
+  - host: "dev.payments-gov.akpdemoapps.link"
+    http:
+      paths:
+      - pathType: Prefix
+        path: /
+        backend:
+          service:
+            name: svc-stable
+            port:
+              number: 80
+  tls:
+    - hosts:
+        - "dev.payments-gov.akpdemoapps.link"
+      secretName: tls-secret
