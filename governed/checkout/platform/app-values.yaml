@@ -58,14 +58,14 @@ pipeline:
         timeout: 5m
       config:
         method: GET
-        url: https://qa.checkout-gov.akpdemoapps.link/
+        url: http://svc-stable.gov-checkout-qa.svc.cluster.local/
         successExpression: response.status == 200
   - name: perf
     after: staging
     steps:
-    - uses: http
+    - uses: http 
       as: smoke-test
       config:
         method: GET
-        url: https://staging.checkout-gov.akpdemoapps.link/
+        url:  http://svc-stable.gov-checkout-staging.svc.cluster.local/
         successExpression: response.status == 200
