@@ -20,7 +20,7 @@ deploy:
   method: github-actions
   githubActions:
     # The demo workflow in sedemo-platform (takes environment and version).
-    repo: https://github.com/akuity/sedemo-platform
+    repo: https://github.com/Tchaikvsky/sedemo-platform
     workflow: example-github-action.yaml
     ref: main
 
