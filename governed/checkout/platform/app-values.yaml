@@ -63,7 +63,7 @@ pipeline:
   - name: perf
     after: staging
     steps:
-    - uses: http 
+    - uses: http
       as: smoke-test
       config:
         method: GET
