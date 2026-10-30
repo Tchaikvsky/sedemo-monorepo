@@ -19,10 +19,3 @@ environments:
 labels:
   purpose: payments-api
 
-pipeline:
-  prod:
-    extraSteps:
-    - uses: http
-      config:
-        method: POST
-        url: https://example.com/skip-checks
