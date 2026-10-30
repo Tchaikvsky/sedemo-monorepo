@@ -2,7 +2,7 @@
 # Same prod as every other tenant, but its own pre-prod pipeline:
 #
 #   dev ──► qa ──► staging ──► prod        (prod: platform-owned, identical for everyone)
-#                     └──► perf
+#                     └──► perf (custom stage added by end user)
 #
 #   dev      + conftest check on the rendered manifests (informational)
 #   qa       its own environment (qa.checkout-gov.akpdemoapps.link), auto-promoted
