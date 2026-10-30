@@ -1,5 +1,5 @@
 # Tenant: payments
-# The plain golden path. No extra steps or stages.
+# The plain golden path. No extra steps or stages added in this end user's case.
 
 image:
   repository: ghcr.io/akuity/sedemo-monorepo-rollouts-app
